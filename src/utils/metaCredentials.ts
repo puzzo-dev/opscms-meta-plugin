@@ -4,7 +4,7 @@ import { asCollectionSlug, type MetaCredentials } from '../types'
 
 /**
  * Resolve a site's active Meta credentials from the meta-config collection.
- * Mirrors payload-erpnext-plugin's getCredentials() exactly: per-site lookup
+ * Mirrors opscms-erpnext-plugin's getCredentials() exactly: per-site lookup
  * (never falls back to another site's config — that would leak data across
  * tenants), decrypts the masking-safety-net way (re-decrypt if an "enc:"
  * prefix leaked through afterRead), fails closed on any inconsistency.

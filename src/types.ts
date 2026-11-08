@@ -3,9 +3,9 @@ import { timingSafeEqual } from 'node:crypto'
 
 /**
  * Minimal access control helpers used by the plugin. Mirrors
- * payload-erpnext-plugin/src/types.ts's shape exactly — this plugin is a
+ * opscms-erpnext-plugin/src/types.ts's shape exactly — this plugin is a
  * separate published npm package (not workspace-linked, same reason
- * payload-erpnext-plugin isn't: workspace links broke the production
+ * opscms-erpnext-plugin isn't: workspace links broke the production
  * pipeline build), so it can't import that package's internals and needs
  * its own copy of these primitives.
  */

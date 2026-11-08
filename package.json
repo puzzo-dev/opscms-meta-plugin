@@ -1,5 +1,5 @@
 {
-  "name": "payload-meta-plugin",
+  "name": "opscms-meta-plugin",
   "version": "0.4.1",
   "description": "Payload CMS plugin for connecting multi-tenant sites to Meta's network (Facebook Pixel + Conversions API, Facebook/Instagram Commerce Catalog, WhatsApp Business Cloud API). Modular per-channel, per-site — nothing hardcoded to one product line.",
   "main": "dist/index.js",

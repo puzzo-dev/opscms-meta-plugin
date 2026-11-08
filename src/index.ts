@@ -37,7 +37,7 @@ import { attachTemplateHooks } from './templates/hooks'
 import type { MetaHost } from './types/host'
 import { registerNotificationChannel } from './channels/registry'
 
-/** Minimal interface for the CMS action registry — same shape payload-erpnext-plugin uses. */
+/** Minimal interface for the CMS action registry — same shape opscms-erpnext-plugin uses. */
 export interface ActionRegistryRef {
     register: (slug: string, handler: (ctx: any) => Promise<{ success: boolean; data?: Record<string, unknown>; error?: string }>) => void
 }
@@ -173,7 +173,7 @@ export function metaPlugin(options: MetaPluginOptions = {}): Plugin {
                     ...config.admin?.components,
                     afterLogin: [
                         ...(config.admin?.components?.afterLogin ?? []),
-                        { path: 'payload-meta-plugin/components/MetaLoginButton', exportName: 'MetaLoginButton' },
+                        { path: 'opscms-meta-plugin/components/MetaLoginButton', exportName: 'MetaLoginButton' },
                     ],
                 },
             },

@@ -8,7 +8,7 @@ function hashPii(value: string): string {
 }
 
 // ── Shared value resolution ─────────────────────────────────────────────────
-// Same {{key}} / {{nested.path}} substitution as payload-erpnext-plugin's
+// Same {{key}} / {{nested.path}} substitution as opscms-erpnext-plugin's
 // erpActions.ts resolveValue() — kept as a local copy since this is a separate
 // published package and can't import that plugin's internals.
 function dottedPathLookup(ctx: Record<string, unknown>, path: string): unknown {
@@ -34,7 +34,7 @@ function resolveValue(template: string, ctx: Record<string, unknown>): unknown {
 // Fires a server-side Meta Conversions API event. Used by a "Trigger Meta
 // Conversion Event" step in the CMS Workflows builder (see index.ts, which
 // injects the `trigger_meta_conversion` block into the workflows collection's
-// steps field, mirroring how payload-erpnext-plugin injects trigger_erp).
+// steps field, mirroring how opscms-erpnext-plugin injects trigger_erp).
 //
 // step.event_name        — Meta standard event name (e.g. "Lead", "Purchase")
 // step.value              — numeric value, supports {{var}}

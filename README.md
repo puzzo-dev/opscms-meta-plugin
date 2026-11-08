@@ -1,4 +1,4 @@
-# payload-meta-plugin
+# opscms-meta-plugin
 
 A self-contained **Payload CMS 3.x plugin** for connecting multi-tenant sites to Meta's network (Facebook, Instagram, WhatsApp).
 
@@ -6,7 +6,7 @@ Modeled on the official "Meta for WooCommerce"/"Facebook for WordPress" plugins,
 
 It provides:
 
-- **Meta Connection Configuration** per site (multi-tenant) with encrypted credentials — same architecture as [`payload-erpnext-plugin`](../payload-erpnext-plugin).
+- **Meta Connection Configuration** per site (multi-tenant) with encrypted credentials — same architecture as [`opscms-erpnext-plugin`](../opscms-erpnext-plugin).
 - **"Connect to Meta Business" OAuth flow** — the same connector UX as the official Meta for WordPress plugin: authorize once, pick a Facebook Page you manage, its linked Instagram Business account is auto-detected, then select an existing Pixel or create a new one. **Manual credential entry stays fully available side by side** — OAuth is a convenience, not a requirement.
 - **Threads connect flow** — separate from the Facebook/Instagram connector (Threads is its own API/host, see [Connecting Facebook, Instagram, and Threads](#connecting-facebook-instagram-and-threads)), also with manual token entry as a fallback.
 - **Server-Side Conversions API** — a `sendConversionEvent()` helper and a `meta-conversion-event` action registered into the CMS workflow engine, so any Workflow can fire a "Trigger Meta Conversion Event" step (order created → `Purchase`, contact form submitted → `Lead`, etc.).
@@ -54,12 +54,12 @@ This plugin is the deliberate fix for that: **one place, per site, to connect to
 ## Installation
 
 ```bash
-npm install payload-meta-plugin
+npm install opscms-meta-plugin
 # or
-pnpm add payload-meta-plugin
+pnpm add opscms-meta-plugin
 ```
 
-Same release shape as `payload-erpnext-plugin`: install the published package by semver. `prepublishOnly` builds `dist/` (gitignored) before `npm publish` uploads the tarball. Version history is in `CHANGELOG.md`.
+Same release shape as `opscms-erpnext-plugin`: install the published package by semver. `prepublishOnly` builds `dist/` (gitignored) before `npm publish` uploads the tarball. Version history is in `CHANGELOG.md`.
 
 ---
 
@@ -69,7 +69,7 @@ Same release shape as `payload-erpnext-plugin`: install the published package by
 
 ```typescript
 import { buildConfig } from 'payload'
-import { metaPlugin } from 'payload-meta-plugin'
+import { metaPlugin } from 'opscms-meta-plugin'
 import { actionRegistry } from './lib/actionRegistry' // your host application's registry
 
 export default buildConfig({
@@ -168,7 +168,7 @@ export interface MetaPluginOptions {
 | Variable | Required | Description |
 |---|---|---|
 | `META_APP_ID` / `META_APP_SECRET` | For OAuth Connect | The one Meta App for the whole deployment (developers.facebook.com) — every tenant site's Connect button uses this. Not required if every site only ever uses manual Access Token entry. Never entered by a site owner; see [Set the encryption key and the platform Meta App](#2-set-the-encryption-key-and-the-platform-meta-app). |
-| `META_ENCRYPTION_KEY` | Production: yes | 32-byte hex key (`openssl rand -hex 32`) for AES-256-GCM credential encryption. Separate from `payload-erpnext-plugin`'s `ERPNEXT_ENCRYPTION_KEY` — rotating one doesn't affect the other. |
+| `META_ENCRYPTION_KEY` | Production: yes | 32-byte hex key (`openssl rand -hex 32`) for AES-256-GCM credential encryption. Separate from `opscms-erpnext-plugin`'s `ERPNEXT_ENCRYPTION_KEY` — rotating one doesn't affect the other. |
 | `ALLOW_PLAINTEXT_META_CREDS` | No | Set to `true` to explicitly allow plain-text credential storage in production. Do not set this unless you understand the risk (a DB dump/backup leaks every tenant's Meta access token). |
 | `PAYLOAD_PUBLIC_SERVER_URL` | For Catalog feed + OAuth | Used to build absolute image URLs in the Commerce Catalog feed, and the OAuth callback redirect URIs (`/api/meta-oauth/callback`, `/api/threads-oauth/callback`). Already set for the host CMS's other public-facing needs. |
 | `META_OAUTH_STATE_SECRET` | No | HMAC key for signing the OAuth `state` param. Falls back to `META_ENCRYPTION_KEY` if unset — only set this separately if you want state-signing and credential-encryption keys to rotate independently. |
@@ -196,7 +196,7 @@ Credentials (`accessToken`, `oauthUserAccessToken`, `threadsAccessToken`) are AE
 `sendConversionEvent(creds, input, log?)` posts a single event to `graph.facebook.com/v21.0/{pixel_id}/events`. Exported directly for host-app code that wants to call it outside the workflow engine:
 
 ```typescript
-import { getMetaCredentials, sendConversionEvent } from 'payload-meta-plugin'
+import { getMetaCredentials, sendConversionEvent } from 'opscms-meta-plugin'
 
 const creds = await getMetaCredentials(payload, 'thatofadagirl')
 if (creds?.pixelId) {
@@ -333,7 +333,7 @@ The plugin adds "Continue with Facebook" to the platform's login page, using the
   `<PAYLOAD_PUBLIC_SERVER_URL>/api/meta-login/callback` listed as a valid OAuth redirect URI. Only `email` and `public_profile` are
   requested, which need no App Review.
 - **Database:** the plugin adds a unique `facebookId` field to the users collection; the platform needs a migration for the column.
-- **Admin screen:** the button is a component of the plugin (`payload-meta-plugin/components/MetaLoginButton`); the platform's import map
+- **Admin screen:** the button is a component of the plugin (`opscms-meta-plugin/components/MetaLoginButton`); the platform's import map
   has to be regenerated (`payload generate:importmap`) after the plugin is updated.
 - **Endpoints:** `GET /api/meta-login/status`, `/start`, `/callback`; `POST /api/meta-login/unlink` (a signed-in person disconnects their own
   Facebook account).

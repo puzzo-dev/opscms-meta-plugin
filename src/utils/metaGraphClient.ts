@@ -1,6 +1,6 @@
 /**
  * Thin HTTP clients for Meta's Graph API and the separate Threads API.
- * Mirrors payload-erpnext-plugin's erpActions.ts erpCall() shape: retry on
+ * Mirrors opscms-erpnext-plugin's erpActions.ts erpCall() shape: retry on
  * transient (5xx/network) failures, fail fast on 4xx, parse Meta's error
  * envelope for a useful message instead of a bare status code.
  */

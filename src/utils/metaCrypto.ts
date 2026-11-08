@@ -3,7 +3,7 @@
  *
  * Provides AES-256-GCM encryption for Meta (App Secret, Access Token) credentials
  * stored in the database. Credentials are encrypted before save and decrypted
- * after read. Same scheme as payload-erpnext-plugin/src/utils/erpnextCrypto.ts,
+ * after read. Same scheme as opscms-erpnext-plugin/src/utils/erpnextCrypto.ts,
  * with its own key so rotating one plugin's key doesn't affect the other.
  *
  * CANONICAL SOURCE: `@ivarse/shared-cms/credential-crypto` holds the

@@ -12,7 +12,7 @@ import { getUserOrgId, getUserWithRole, asCollectionSlug } from '../types';
  * overrideAccess) may set the Meta App Secret / Access Token. Editors can still
  * see the (masked) config, but must not be able to rotate credentials or exfiltrate
  * them by pointing the connection at something else — same reasoning as
- * payload-erpnext-plugin's adminOrAboveField.
+ * opscms-erpnext-plugin's adminOrAboveField.
  */
 const adminOrAboveField: FieldAccess = ({ req }) =>
     ['super-admin', 'admin'].includes(getUserWithRole(req?.user)?.role ?? '')
@@ -255,7 +255,7 @@ export const MetaConfig: CollectionConfig = {
             admin: {
                 components: {
                     Field: {
-                        path: 'payload-meta-plugin/components/MetaConnectPanel',
+                        path: 'opscms-meta-plugin/components/MetaConnectPanel',
                         exportName: 'MetaTenantDefaults',
                     },
                 },
@@ -342,7 +342,7 @@ export const MetaConfig: CollectionConfig = {
                             admin: {
                                 components: {
                                     Field: {
-                                        path: 'payload-meta-plugin/components/MetaConnectPanel',
+                                        path: 'opscms-meta-plugin/components/MetaConnectPanel',
                                         exportName: 'MetaConnectPanelField',
                                     },
                                 },
@@ -437,7 +437,7 @@ export const MetaConfig: CollectionConfig = {
                                 condition: (data) => Boolean(data?.pixelEnabled) && data?.authMethod !== 'oauth',
                                 components: {
                                     Field: {
-                                        path: 'payload-meta-plugin/components/MetaPixelSelect',
+                                        path: 'opscms-meta-plugin/components/MetaPixelSelect',
                                         exportName: 'MetaPixelSelectField',
                                     },
                                 },
@@ -492,7 +492,7 @@ export const MetaConfig: CollectionConfig = {
                             admin: {
                                 components: {
                                     Field: {
-                                        path: 'payload-meta-plugin/components/MetaCatalogSync',
+                                        path: 'opscms-meta-plugin/components/MetaCatalogSync',
                                         exportName: 'MetaCatalogSyncField',
                                     },
                                 },
@@ -553,7 +553,7 @@ export const MetaConfig: CollectionConfig = {
                             admin: {
                                 components: {
                                     Field: {
-                                        path: 'payload-meta-plugin/components/ThreadsConnectPanel',
+                                        path: 'opscms-meta-plugin/components/ThreadsConnectPanel',
                                         exportName: 'ThreadsConnectPanelField',
                                     },
                                 },
