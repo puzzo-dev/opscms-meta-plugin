@@ -8,7 +8,6 @@ import {
     useMetaAppInfo, MetaAppInfoBadge, DetailList, openMetaOAuthPopup,
 } from '../shared'
 import { clearedMetaUserConnection } from '../../oauth/clearedConnection'
-import { WhatsAppAlertStatus, type WhatsAppAlertCard } from './WhatsAppAlertStatus'
 
 export { MetaTenantDefaults } from './TenantDefaults'
 
@@ -70,8 +69,6 @@ export const MetaConnectPanelField: React.FC = () => {
     const [newPixelName, setNewPixelName] = useState('')
     const [createBusinessId, setCreateBusinessId] = useState('')
     const [stepMessage, setStepMessage] = useState<string | null>(null)
-    const [alerts, setAlerts] = useState<WhatsAppAlertCard | null>(null)
-    const [alertsBusy, setAlertsBusy] = useState(false)
     const [autoPageFailed, setAutoPageFailed] = useState(false)
     const autoOnce = useRef({ page: false, catalog: false, pixel: false, number: false })
 
@@ -168,7 +165,6 @@ export const MetaConnectPanelField: React.FC = () => {
                 setPixels(null)
                 setNumbers(null)
                 setFacebookName(null)
-                setAlerts(null)
                 setSelectedPageId('')
                 setSelectedCatalogId('')
                 setSelectedPixelId('')
@@ -300,102 +296,6 @@ export const MetaConnectPanelField: React.FC = () => {
             .finally(() => setSaving(false))
     }
 
-    const requestAlerts = useCallback(async (method: 'GET' | 'POST', retry = false): Promise<WhatsAppAlertCard> => {
-        const calm: WhatsAppAlertCard = {
-            state: 'needs_attention',
-            headline: 'WhatsApp alerts need another try',
-            detail: 'The number is saved. Try again when you are ready.',
-        }
-        try {
-            const res = await fetch(
-                method === 'GET' ? `/api/meta-whatsapp/templates?configId=${id}` : '/api/meta-whatsapp/templates',
-                method === 'GET'
-                    ? undefined
-                    : {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ configId: id, retry }),
-                    },
-            )
-            const data = await res.json().catch(() => null) as WhatsAppAlertCard & { error?: string } | null
-            if (!res.ok || !data || data.error || !data.state) return calm
-            return data
-        } catch {
-            return calm
-        }
-    }, [id])
-
-    useEffect(() => {
-        if (!id || !isConnected || !doc?.whatsappPhoneNumberId) return
-        let cancelled = false
-        setAlerts((current) => (
-            current && current.state !== 'setting_up'
-                ? current
-                : {
-                    state: 'setting_up',
-                    headline: 'Checking WhatsApp alerts',
-                    detail: 'This takes a moment.',
-                }
-        ))
-        ;(async () => {
-            const current = await requestAlerts('GET')
-            if (cancelled) return
-            setAlerts(current)
-            if (current.state !== 'setting_up') return
-            setAlerts({
-                state: 'setting_up',
-                headline: 'Preparing WhatsApp alerts',
-                detail: 'You do not need to open WhatsApp.',
-            })
-            setAlertsBusy(true)
-            const filed = await requestAlerts('POST', false)
-            if (cancelled) return
-            setAlerts(filed)
-            setAlertsBusy(false)
-        })()
-        return () => { cancelled = true }
-    }, [id, isConnected, doc?.whatsappPhoneNumberId, requestAlerts])
-
-    useEffect(() => {
-        if (alerts?.state !== 'reviewing' || !id) return
-        let stopped = false
-        let ticks = 0
-        const timer = setInterval(() => {
-            ticks += 1
-            if (ticks >= 20) {
-                stopped = true
-                clearInterval(timer)
-                return
-            }
-            requestAlerts('GET').then((next) => {
-                if (!stopped) setAlerts(next)
-            })
-        }, 30_000)
-        return () => {
-            stopped = true
-            clearInterval(timer)
-        }
-    }, [alerts?.state, id, requestAlerts])
-
-    const retryAlerts = () => {
-        setAlertsBusy(true)
-        setAlerts({
-            state: 'setting_up',
-            headline: 'Preparing WhatsApp alerts',
-            detail: 'This takes a moment. You do not need to open WhatsApp.',
-        })
-        requestAlerts('POST', true)
-            .then(setAlerts)
-            .finally(() => setAlertsBusy(false))
-    }
-
-    const checkAlerts = () => {
-        setAlertsBusy(true)
-        requestAlerts('GET')
-            .then(setAlerts)
-            .finally(() => setAlertsBusy(false))
-    }
-
     const useNumber = (phoneNumberId?: string) => {
         const choice = phoneNumberId || selectedNumberId || doc?.whatsappPhoneNumberId || ''
         if (!id || !choice) return
@@ -407,7 +307,6 @@ export const MetaConnectPanelField: React.FC = () => {
                 dispatchFields({ type: 'UPDATE', path: 'whatsappEnabled', value: true })
                 dispatchFields({ type: 'UPDATE', path: 'whatsappPhoneNumberId', value: data.phoneNumberId })
                 dispatchFields({ type: 'UPDATE', path: 'whatsappBusinessAccountId', value: data.wabaId })
-                if (data.alerts?.state) setAlerts(data.alerts)
                 loadDoc()
             })
             .catch(() => setAssetsError('Failed to save the WhatsApp number'))
@@ -637,14 +536,6 @@ export const MetaConnectPanelField: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    )}
-                                    {alerts && (
-                                        <WhatsAppAlertStatus
-                                            alerts={alerts}
-                                            busy={alertsBusy}
-                                            onRetry={retryAlerts}
-                                            onCheck={checkAlerts}
-                                        />
                                     )}
                                 </>
                             )}

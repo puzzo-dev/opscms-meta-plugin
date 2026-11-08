@@ -292,3 +292,48 @@ See `payload-cms/docs/future-features.md` in the host monorepo for the full, up-
 ## License
 
 MIT
+
+
+## Webhook (template approvals and account events)
+
+Meta reports what happens on its side to one callback address per app. Register
+`https://<your CMS>/api/meta-webhook` as the callback of the platform's Meta app, for the
+**WhatsApp Business Account** topic, with the verify token from `META_WEBHOOK_VERIFY_TOKEN`.
+The app secret (`META_APP_SECRET`) must also be set: every delivery is signed with it, and a
+delivery with a missing or wrong signature is refused with 401.
+
+Each site's business account is subscribed to the app when the site chooses its WhatsApp
+number (and unsubscribed when it disconnects), so its events arrive at the callback. Template
+changes are handed to the host as events; see the changelog for their names. The host is
+passed as `metaPlugin({ host: { emitSystemEvent } })`. Without it the webhook still answers
+and checks deliveries but has nobody to tell.
+
+
+## WhatsApp templates and approval
+
+Meta must approve the exact wording of a WhatsApp message before it can be sent. The plugin does this for the
+notification templates a site actually sends by WhatsApp, with no extra setup:
+
+1. A workflow with a *send notification* step that includes WhatsApp is saved (or such a template's text is edited), and the
+   site has connected its WhatsApp number through Meta.
+2. The plugin submits the template's message text to the site's WhatsApp business account.
+3. Meta approves it (the webhook or the five-minute check finds out), and from then on the message is sent by template name.
+   If Meta does not approve it, the owner is told through the host's automation and the message is not sent by WhatsApp.
+
+The host needs the `meta-approvals` collection's migration, and `metaPlugin({ host })` with `emitSystemEvent` and
+`ensureEventHandler`. A site whose WhatsApp goes through another service (OpenWA) is not touched.
+
+## Signing in to the platform with Facebook
+
+The plugin adds "Continue with Facebook" to the platform's login page, using the same Meta app customers connect through.
+
+- **Who gets in:** someone who already has a platform account. Their Facebook email must be the same as their platform email to join the
+  two; after that they sign in by Facebook id. Signing in never creates an account, and an account is never matched on a different email.
+- **Setup:** `META_APP_ID` and `META_APP_SECRET` on the server, the Facebook Login product on the Meta app, and
+  `<PAYLOAD_PUBLIC_SERVER_URL>/api/meta-login/callback` listed as a valid OAuth redirect URI. Only `email` and `public_profile` are
+  requested, which need no App Review.
+- **Database:** the plugin adds a unique `facebookId` field to the users collection; the platform needs a migration for the column.
+- **Admin screen:** the button is a component of the plugin (`payload-meta-plugin/components/MetaLoginButton`); the platform's import map
+  has to be regenerated (`payload generate:importmap`) after the plugin is updated.
+- **Endpoints:** `GET /api/meta-login/status`, `/start`, `/callback`; `POST /api/meta-login/unlink` (a signed-in person disconnects their own
+  Facebook account).

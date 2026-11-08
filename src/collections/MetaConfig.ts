@@ -533,15 +533,6 @@ export const MetaConfig: CollectionConfig = {
                                 condition: (_data, siblingData) => Boolean(siblingData?.whatsappEnabled),
                             },
                         },
-                        {
-                            name: 'whatsappAlertsAnnouncedAt',
-                            type: 'date',
-                            admin: {
-                                hidden: true,
-                                readOnly: true,
-                                description: 'When the owner was told that WhatsApp alerts are ready. Cleared if the number changes.',
-                            },
-                        },
                     ],
                 },
 

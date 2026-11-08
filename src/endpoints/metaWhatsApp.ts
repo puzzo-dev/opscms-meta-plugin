@@ -3,8 +3,9 @@ import { graphGet } from '../utils/metaGraphClient'
 import { callerOwnsConfigSite, asCollectionSlug, getUserWithRole } from '../types'
 import { listBusinesses } from '../utils/metaBusinesses'
 import { tokenForCatalog } from '../sync/catalogSync'
-import type { AlertSummary } from '../whatsapp/alertTemplates'
-import { ensureAlertTemplates, readAlertTemplates } from '../whatsapp/fileAlertTemplates'
+import { subscribeWabaToApp } from '../utils/wabaSubscription'
+import type { MetaHost } from '../types/host'
+import { syncAllTemplatesForSite } from '../templates/sync'
 
 export interface WhatsAppNumberOption {
     id: string
@@ -106,7 +107,7 @@ export const metaWhatsAppNumbersEndpoint: Endpoint = {
 }
 
 // ── POST /meta-whatsapp/select { configId, phoneNumberId } ──────────────────
-export const metaWhatsAppSelectEndpoint: Endpoint = {
+export const createMetaWhatsAppSelectEndpoint = (host?: MetaHost): Endpoint => ({
     path: '/meta-whatsapp/select',
     method: 'post',
     handler: async (req) => {
@@ -127,7 +128,6 @@ export const metaWhatsAppSelectEndpoint: Endpoint = {
             return Response.json({ error: 'That WhatsApp number is not on this Facebook login.' }, { status: 404 })
         }
 
-        const previousPhone = typeof config.whatsappPhoneNumberId === 'string' ? config.whatsappPhoneNumberId : ''
         await req.payload.update({
             collection: asCollectionSlug('meta-config'),
             id: body.configId,
@@ -135,95 +135,32 @@ export const metaWhatsAppSelectEndpoint: Endpoint = {
                 whatsappEnabled: true,
                 whatsappPhoneNumberId: chosen.id,
                 whatsappBusinessAccountId: chosen.wabaId,
-                // A different number has its own Meta review. The owner is told again once that one is approved.
-                ...(previousPhone !== chosen.id ? { whatsappAlertsAnnouncedAt: null } : {}),
             },
             overrideAccess: true,
             context: { skipConnectionTest: true },
         })
-        const alerts = await fileAlertsQuietly(req, token, chosen.wabaId)
+        // Meta only reports this business account's events (template approvals, quality, alerts) to an app it has subscribed. A
+        // failure does not undo the choice of number; it is reported so the screen can say events will not arrive until retried.
+        const subscription = await subscribeWabaToApp(token, chosen.wabaId)
+        if (!subscription.ok) req.payload.logger.warn(`[meta:whatsapp] could not subscribe ${chosen.wabaId} to the app: ${subscription.error}`)
+        // The site now sends WhatsApp through Meta: submit the templates its workflows already use, so approval starts now rather
+        // than the next time someone saves a workflow. In the background; the choice of number does not wait for Meta.
+        const siteId = (config.site && typeof config.site === 'object' ? (config.site as { id?: string | number }).id : config.site) as string | number | undefined
+        if (siteId != null) {
+            setTimeout(() => {
+                syncAllTemplatesForSite({ payload: req.payload, req, host }, siteId).catch((err: unknown) =>
+                    req.payload.logger.error(`[meta:templates] submitting a new site's templates failed: ${err}`))
+            }, 2000)
+        }
         return Response.json({
             ok: true,
             phoneNumberId: chosen.id,
             displayPhone: chosen.displayPhone,
             wabaId: chosen.wabaId,
-            alerts,
+            webhookSubscribed: subscription.ok,
+            ...(subscription.ok ? {} : { webhookWarning: subscription.error }),
         })
     },
-}
+})
 
-const savedNumberSummary: AlertSummary = {
-    state: 'needs_attention',
-    headline: 'WhatsApp alerts need another try',
-    detail: 'The number is saved. Try again when you are ready.',
-}
-
-async function fileAlertsQuietly(
-    req: Parameters<Endpoint['handler']>[0],
-    token: string,
-    wabaId: string,
-    retry = false,
-): Promise<AlertSummary> {
-    try {
-        return await ensureAlertTemplates(token, wabaId, { replaceRejected: retry })
-    } catch (err) {
-        req.payload.logger.warn(`[MetaWhatsApp] template filing failed: ${err}`)
-        return savedNumberSummary
-    }
-}
-
-function wabaIdFrom(config: Record<string, unknown>): string {
-    return typeof config.whatsappBusinessAccountId === 'string' ? config.whatsappBusinessAccountId.trim() : ''
-}
-
-// ── GET /meta-whatsapp/templates?configId= ──────────────────────────────────
-export const metaWhatsAppTemplatesEndpoint: Endpoint = {
-    path: '/meta-whatsapp/templates',
-    method: 'get',
-    handler: async (req) => {
-        if (!isAdminOrAbove(req)) return Response.json({ error: 'Forbidden' }, { status: 403 })
-        const configId = req.query?.configId as string | undefined
-        if (!configId) return Response.json({ error: 'Missing configId' }, { status: 400 })
-        const config = await loadConfig(req, configId)
-        if (!callerOwnsConfigSite(req, config)) return Response.json({ error: 'Forbidden' }, { status: 403 })
-        const wabaId = wabaIdFrom(config)
-        if (!wabaId) {
-            return Response.json({
-                state: 'setting_up',
-                headline: 'Preparing WhatsApp alerts',
-                detail: 'Choose a WhatsApp number first. You do not paste any codes.',
-            })
-        }
-        const token = tokenForCatalog(config)
-        if (!token) {
-            return Response.json({
-                state: 'needs_attention',
-                headline: 'WhatsApp alerts need another try',
-                detail: 'Reconnect with Facebook so WhatsApp alerts can be prepared. The number you chose is already saved.',
-            })
-        }
-        try {
-            return Response.json(await readAlertTemplates(token, wabaId))
-        } catch (err) {
-            req.payload.logger.warn(`[MetaWhatsApp] template status failed: ${err}`)
-            return Response.json(savedNumberSummary)
-        }
-    },
-}
-
-// ── POST /meta-whatsapp/templates { configId, retry? } ──────────────────────
-export const metaWhatsAppTemplatesFileEndpoint: Endpoint = {
-    path: '/meta-whatsapp/templates',
-    method: 'post',
-    handler: async (req) => {
-        if (!isAdminOrAbove(req)) return Response.json({ error: 'Forbidden' }, { status: 403 })
-        const body = (await req.json?.()) as { configId?: string; retry?: boolean } | undefined
-        if (!body?.configId) return Response.json({ error: 'Missing configId' }, { status: 400 })
-        const config = await loadConfig(req, body.configId)
-        if (!callerOwnsConfigSite(req, config)) return Response.json({ error: 'Forbidden' }, { status: 403 })
-        const wabaId = wabaIdFrom(config)
-        const token = tokenForCatalog(config)
-        if (!wabaId || !token) return Response.json(savedNumberSummary)
-        return Response.json(await fileAlertsQuietly(req, token, wabaId, body.retry === true))
-    },
-}
+export const metaWhatsAppSelectEndpoint: Endpoint = createMetaWhatsAppSelectEndpoint()

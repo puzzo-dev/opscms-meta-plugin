@@ -18,7 +18,6 @@ describe('clearedMetaUserConnection', () => {
             'catalogId',
             'whatsappPhoneNumberId',
             'whatsappBusinessAccountId',
-            'whatsappAlertsAnnouncedAt',
         ]) {
             assert.equal(cleared[key], null, key)
         }

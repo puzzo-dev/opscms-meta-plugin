@@ -21,7 +21,6 @@ export function clearedMetaUserConnection(): Record<string, string | false | nul
         whatsappPhoneNumberId: null,
         whatsappBusinessAccountId: null,
         whatsappEnabled: false,
-        whatsappAlertsAnnouncedAt: null,
         authMethod: 'manual',
         connectionStatus: 'disconnected',
     }

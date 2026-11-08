@@ -6,6 +6,7 @@ import { clearedMetaUserConnection } from '../oauth/clearedConnection'
 import { oauthPopupResponse } from '../oauth/popupResult'
 import { tokenForCatalog } from '../sync/catalogSync'
 import { listBusinesses } from '../utils/metaBusinesses'
+import { unsubscribeWabaFromApp } from '../utils/wabaSubscription'
 
 /**
  * Meta Business Login connect flow — same idea as the official "Meta for
@@ -220,6 +221,15 @@ export const metaOAuthDisconnectEndpoint: Endpoint = {
             return Response.json({ error: 'Config not found' }, { status: 404 })
         }
         if (!callerOwnsConfigSite(req, config)) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+        // Stop Meta sending this business account's events here before the token that authorises it is cleared. Best effort: a
+        // failure must not stop the owner disconnecting.
+        const wabaId = typeof config.whatsappBusinessAccountId === 'string' ? config.whatsappBusinessAccountId : ''
+        const token = tokenForCatalog(config)
+        if (wabaId && token) {
+            const removed = await unsubscribeWabaFromApp(token, wabaId)
+            if (!removed.ok) req.payload.logger.warn(`[meta:oauth] could not unsubscribe ${wabaId} on disconnect: ${removed.error}`)
+        }
 
         const cleared = clearedMetaUserConnection()
         await req.payload.update({

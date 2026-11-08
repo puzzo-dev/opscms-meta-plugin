@@ -23,12 +23,19 @@ import {
 } from './endpoints/metaCatalogSync'
 import {
     metaWhatsAppNumbersEndpoint,
-    metaWhatsAppSelectEndpoint,
-    metaWhatsAppTemplatesEndpoint,
-    metaWhatsAppTemplatesFileEndpoint,
+    createMetaWhatsAppSelectEndpoint,
 } from './endpoints/metaWhatsApp'
 import { COMMERCE_COLLECTION } from './sync/catalogProduct'
 import { syncCatalogDoc } from './sync/catalogSync'
+import { metaWhatsAppChannel } from './channels/whatsapp'
+import { createMetaWebhookEndpoints } from './endpoints/metaWebhook'
+import { createMetaLoginEndpoints } from './endpoints/metaLogin'
+import { attachFacebookLogin } from './fields/facebookIdField'
+import { MetaApprovals } from './collections/MetaApprovals'
+import { createTemplateStatusJob } from './jobs/templateStatus'
+import { attachTemplateHooks } from './templates/hooks'
+import type { MetaHost } from './types/host'
+import { registerNotificationChannel } from './channels/registry'
 
 /** Minimal interface for the CMS action registry — same shape payload-erpnext-plugin uses. */
 export interface ActionRegistryRef {
@@ -42,8 +49,12 @@ export interface MetaPluginOptions {
      * invoked by the workflow engine's "Trigger Meta Conversion Event" step.
      */
     registry?: ActionRegistryRef
-    /** Reserved for future host bindings (mirrors payload-erpnext-plugin's `host` option). Unused for now. */
-    host?: Record<string, unknown>
+    /**
+     * The host CMS's workflow engine. With it, what Meta reports to the plugin's webhook (a template approved, rejected or
+     * recategorised) is handed to the host as an event for its workflows to act on. Without it the webhook still checks and
+     * accepts Meta's deliveries, but nobody is told.
+     */
+    host?: MetaHost
 }
 
 /**
@@ -80,8 +91,13 @@ export function metaPlugin(options: MetaPluginOptions = {}): Plugin {
     }
 
     return (config) => {
+        // Sites that connected a WhatsApp number on their Facebook login send the host's notifications from it.
+        registerNotificationChannel(metaWhatsAppChannel)
+
+        // The collection people sign in to gets the Facebook link, and the login page a "Continue with Facebook" button.
+        const usersSlug = (config.admin?.user as string | undefined) ?? 'users'
         const modifiedCollections = (config.collections || []).map((collection) => {
-            const withSync = attachCommerceCatalogSync(collection)
+            const withSync = attachFacebookLogin(attachTemplateHooks(attachCommerceCatalogSync(collection), options.host), usersSlug)
             if (withSync.slug !== 'workflows') return withSync
 
             const stepsField = withSync.fields.find((f: Field): f is BlocksField => 'name' in f && f.name === 'steps' && f.type === 'blocks')
@@ -151,7 +167,18 @@ export function metaPlugin(options: MetaPluginOptions = {}): Plugin {
 
         return {
             ...config,
-            collections: [...modifiedCollections, MetaConfig],
+            admin: {
+                ...config.admin,
+                components: {
+                    ...config.admin?.components,
+                    afterLogin: [
+                        ...(config.admin?.components?.afterLogin ?? []),
+                        { path: 'payload-meta-plugin/components/MetaLoginButton', exportName: 'MetaLoginButton' },
+                    ],
+                },
+            },
+            jobs: { ...config.jobs, tasks: [...(config.jobs?.tasks ?? []), createTemplateStatusJob(options.host)] },
+            collections: [...modifiedCollections, MetaConfig, MetaApprovals],
             endpoints: [
                 ...(config.endpoints || []),
                 metaCatalogFeedEndpoint,
@@ -170,11 +197,11 @@ export function metaPlugin(options: MetaPluginOptions = {}): Plugin {
                 metaCatalogCreateEndpoint,
                 metaCatalogSyncEndpoint,
                 metaWhatsAppNumbersEndpoint,
-                metaWhatsAppSelectEndpoint,
-                metaWhatsAppTemplatesEndpoint,
-                metaWhatsAppTemplatesFileEndpoint,
+                createMetaWhatsAppSelectEndpoint(options.host),
                 threadsOAuthStartEndpoint,
                 threadsOAuthCallbackEndpoint,
+                ...createMetaWebhookEndpoints(options.host),
+                ...createMetaLoginEndpoints(options.host),
             ],
         }
     }
@@ -215,12 +242,20 @@ function attachCommerceCatalogSync(collection: CollectionConfig): CollectionConf
     }
 }
 
-export { whatsappTemplateMessage, explainTemplateSendError, WHATSAPP_ALERTS_READY_KEY } from './whatsapp/alertTemplates'
-export { alertStatusForConfig, fileMissingAlertTemplates } from './whatsapp/fileAlertTemplates'
-export type { WhatsAppTemplateMessage, AlertSummary } from './whatsapp/alertTemplates'
+export { explainTemplateSendError } from './whatsapp/templateErrors'
 export { encryptCredential, decryptCredential } from './utils/metaCrypto'
 export { getMetaCredentials } from './utils/metaCredentials'
 export { sendConversionEvent } from './sync/conversionsApi'
 export { metaConversionEventHandler } from './actions/metaActions'
 export type { ConversionEventInput, ConversionEventResult } from './sync/conversionsApi'
 export type { MetaCredentials, MetaConfigDoc } from './types'
+
+export { metaWhatsAppChannel } from './channels/whatsapp'
+export type { NotificationChannelProvider } from './channels/types'
+export type { MetaHost, HostEventOutcome } from './types/host'
+export { createMetaWebhookEndpoints } from './endpoints/metaWebhook'
+export { createMetaLoginEndpoints } from './endpoints/metaLogin'
+export { facebookIdField, attachFacebookLogin } from './fields/facebookIdField'
+export { resolveLoginUser } from './login/resolveUser'
+export type { FacebookLoginFailure, FacebookProfile } from './types/login'
+export { subscribeWabaToApp, unsubscribeWabaFromApp } from './utils/wabaSubscription'
