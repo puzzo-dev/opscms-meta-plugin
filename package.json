@@ -77,7 +77,7 @@
     "build": "tsup src/index.ts src/components/MetaConnectPanel/index.tsx src/components/MetaPixelSelect/index.tsx src/components/ThreadsConnectPanel/index.tsx src/components/MetaCatalogSync/index.tsx src/components/MetaLoginButton/index.tsx --format cjs,esm --dts --clean --out-dir dist",
     "dev": "tsup src/index.ts src/components/MetaConnectPanel/index.tsx src/components/MetaPixelSelect/index.tsx src/components/ThreadsConnectPanel/index.tsx src/components/MetaCatalogSync/index.tsx --format cjs,esm --dts --watch --out-dir dist",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test 'src/**/*.test.ts'",
+    "test": "tsx --test 'tests/**/*.test.ts'",
     "lint": "eslint src",
     "prepublishOnly": "npm run build"
   },

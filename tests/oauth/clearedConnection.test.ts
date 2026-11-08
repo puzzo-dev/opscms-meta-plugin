@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { clearedMetaUserConnection } from './clearedConnection.js'
+import { clearedMetaUserConnection } from '../../src/oauth/clearedConnection.js'
 
 describe('clearedMetaUserConnection', () => {
     it('drops every token and Meta id the Facebook login stored', () => {

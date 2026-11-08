@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { phonesFromWaba } from './metaWhatsApp.js'
+import { phonesFromWaba } from '../../src/endpoints/metaWhatsApp.js'
 
 describe('phonesFromWaba', () => {
     it('keeps the business account with each phone the login can send from', () => {

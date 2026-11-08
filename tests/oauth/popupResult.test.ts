@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { META_OAUTH_MESSAGE_SOURCE, oauthPopupResponse } from './popupResult.js'
+import { META_OAUTH_MESSAGE_SOURCE, oauthPopupResponse } from '../../src/oauth/popupResult.js'
 
 describe('oauthPopupResponse', () => {
     it('tells the opener the result and falls back to the admin document', async () => {

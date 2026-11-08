@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import type { Payload } from 'payload'
 
-import { registerNotificationChannel } from './registry'
-import { toE164Digits } from './phone'
-import { metaWhatsAppChannel } from './whatsapp'
+import { registerNotificationChannel } from '../../src/channels/registry'
+import { toE164Digits } from '../../src/channels/phone'
+import { metaWhatsAppChannel } from '../../src/channels/whatsapp'
 
 const logger = { warn() {}, error() {}, info() {} }
 const payload = { logger, find: async () => ({ docs: [], totalDocs: 0 }) } as unknown as Payload

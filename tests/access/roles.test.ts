@@ -17,11 +17,11 @@ import { describe, it, beforeEach, afterEach } from 'node:test'
 const INTERNAL_SECRET = 'internal-secret-for-meta-plugin-tests'
 const ORIGINAL_ENV = { ...process.env }
 
-let roles: typeof import('./roles.js')
+let roles: typeof import('../../src/access/roles.js')
 
 beforeEach(async () => {
     process.env.INTERNAL_API_SECRET = INTERNAL_SECRET
-    roles = await import('./roles.js')
+    roles = await import('../../src/access/roles.js')
 })
 
 afterEach(() => {

@@ -6,7 +6,7 @@ import {
     COMMERCE_COLLECTION,
     deleteRequest,
     toCatalogItem,
-} from './catalogProduct.js'
+} from '../../src/sync/catalogProduct.js'
 
 const template = 'https://shop.example/menu/{slug}'
 

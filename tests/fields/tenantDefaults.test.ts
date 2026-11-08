@@ -5,7 +5,7 @@ import {
     defaultSiteId,
     pinnedOrganizationValue,
     pinnedSiteValue,
-} from './tenantDefaults.js'
+} from '../../src/fields/tenantDefaults.js'
 
 const editor = { id: 3, role: 'editor', site: 7, organization: 2 }
 const admin = { id: 2, role: 'admin', organization: { id: 2 } }

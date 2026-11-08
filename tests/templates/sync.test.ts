@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import type { Payload, PayloadRequest } from 'payload'
 
-import { metaWhatsAppChannel } from '../channels/whatsapp'
-import type { MetaHost } from '../types/host'
-import { applyStatusChange, checkPendingTemplates, findRecordForReport, syncAfterTemplateChange, syncSiteTemplates, whatsappTemplateKeys } from './sync'
+import { metaWhatsAppChannel } from '../../src/channels/whatsapp'
+import type { MetaHost } from '../../src/types/host'
+import { applyStatusChange, checkPendingTemplates, findRecordForReport, syncAfterTemplateChange, syncSiteTemplates, whatsappTemplateKeys } from '../../src/templates/sync'
 
 /**
  * The whole path from "a workflow sends this template by WhatsApp" to "Meta approved it, so it is sent" or "it was refused, so

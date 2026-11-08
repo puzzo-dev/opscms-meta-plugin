@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 import { APIError } from 'payload'
 import type { Payload, PayloadRequest } from 'payload'
 
-import { createMetaLoginEndpoints } from '../endpoints/metaLogin'
+import { createMetaLoginEndpoints } from '../../src/endpoints/metaLogin'
 import type { Endpoint } from 'payload'
-import { fetchLoginProfile, exchangeLoginCode } from './facebook'
-import { resolveLoginUser } from './resolveUser'
-import { clearedStateCookie, newState, readCookie, STATE_COOKIE, stateCookie, statesMatch } from './state'
+import { fetchLoginProfile, exchangeLoginCode } from '../../src/login/facebook'
+import { resolveLoginUser } from '../../src/login/resolveUser'
+import { clearedStateCookie, newState, readCookie, STATE_COOKIE, stateCookie, statesMatch } from '../../src/login/state'
 
 /**
  * Signing in to the platform with Facebook. Facebook's answers are faked; Payload's own session code is the real one.

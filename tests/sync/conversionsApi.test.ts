@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { describe, it, beforeEach, afterEach } from 'node:test'
 
-import { sendConversionEvent } from './conversionsApi.js'
-import type { MetaCredentials } from '../types.js'
+import { sendConversionEvent } from '../../src/sync/conversionsApi.js'
+import type { MetaCredentials } from '../../src/types.js'
 
 /**
  * The Conversions API sends purchase and lead events from this server directly

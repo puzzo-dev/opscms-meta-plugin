@@ -4,11 +4,11 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import type { Payload, PayloadRequest } from 'payload'
 
-import { createMetaWebhookEndpoints } from '../endpoints/metaWebhook'
-import type { MetaHost } from '../types/host'
-import { subscribeWabaToApp, unsubscribeWabaFromApp } from '../utils/wabaSubscription'
-import { handshakeChallenge, signatureMatches } from './signature'
-import { templateEventsFrom } from './templateEvents'
+import { createMetaWebhookEndpoints } from '../../src/endpoints/metaWebhook'
+import type { MetaHost } from '../../src/types/host'
+import { subscribeWabaToApp, unsubscribeWabaFromApp } from '../../src/utils/wabaSubscription'
+import { handshakeChallenge, signatureMatches } from '../../src/webhook/signature'
+import { templateEventsFrom } from '../../src/webhook/templateEvents'
 
 const SECRET = 'app-secret-for-tests'
 const sign = (body: string, secret = SECRET) => `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`

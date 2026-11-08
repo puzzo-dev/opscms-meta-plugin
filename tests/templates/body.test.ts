@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { contentHash, metaTemplateName, toMetaBody, valueAtPath } from './body'
+import { contentHash, metaTemplateName, toMetaBody, valueAtPath } from '../../src/templates/body'
 
 describe('toMetaBody', () => {
     it('renames the user\'s placeholders to names Meta accepts and remembers where each came from', () => {

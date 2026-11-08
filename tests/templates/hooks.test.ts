@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 
 import type { CollectionConfig, Field, PayloadRequest } from 'payload'
 
-import { attachTemplateHooks } from './hooks'
+import { attachTemplateHooks } from '../../src/templates/hooks'
 
 /** The status line on a notification template must show a person only their own sites' approvals. */
 

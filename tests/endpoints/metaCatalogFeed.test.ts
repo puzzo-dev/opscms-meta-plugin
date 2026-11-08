@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import type { PayloadRequest } from 'payload'
 
-import { metaCatalogFeedEndpoint } from './metaCatalogFeed.js'
+import { metaCatalogFeedEndpoint } from '../../src/endpoints/metaCatalogFeed.js'
 
 /**
  * The catalog feed publishes a site's products to Meta as a CSV that Meta

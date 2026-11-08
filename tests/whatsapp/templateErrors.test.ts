@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 
-import { explainTemplateSendError } from './templateErrors'
+import { explainTemplateSendError } from '../../src/whatsapp/templateErrors'
 
 describe('explainTemplateSendError', () => {
     it('queues a send whose template is still with Meta, and hides the response body', () => {

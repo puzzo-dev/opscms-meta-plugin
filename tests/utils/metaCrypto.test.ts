@@ -37,7 +37,7 @@ async function loadCrypto(env: Record<string, string | undefined> = {}) {
         else process.env[k] = v
     }
     // Cache-busting query so each load re-evaluates module-level state.
-    const mod = await import(`./metaCrypto.js?t=${Math.random()}`)
+    const mod = await import(`../../src/utils/metaCrypto.js?t=${Math.random()}`)
     mod.__resetEncryptionKey()
     return mod
 }
