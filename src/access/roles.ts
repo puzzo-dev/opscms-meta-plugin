@@ -17,12 +17,19 @@ type SiteLookup = {
             limit: number
             pagination: boolean
             depth: number
+            select: { id: true }
             overrideAccess: boolean
         }) => Promise<{ docs: Array<{ id: string | number }> }>
     }
 }
 
-const orgSiteIdsCache = new WeakMap<object, Map<string, (string | number)[]>>()
+/**
+ * Per request, per organization: the PROMISE of the ids, so the several rules of one request (this package has a dozen collections, each
+ * asking for the same answer at the same moment) share one query instead of each sending its own. And only the ids are asked for: a
+ * site row is large (every menu, footer column and translation comes with it), and reading whole rows to keep only the id made a page
+ * load for an admin run a dozen of the heaviest queries there are, enough to time the database out.
+ */
+const orgSiteIdsCache = new WeakMap<object, Map<string, Promise<(string | number)[]>>>()
 
 async function getOrgSiteIds(req: SiteLookup, orgId: string | number): Promise<(string | number)[]> {
     let byOrg = orgSiteIdsCache.get(req)
@@ -33,18 +40,23 @@ async function getOrgSiteIds(req: SiteLookup, orgId: string | number): Promise<(
     const key = String(orgId)
     const cached = byOrg.get(key)
     if (cached) return cached
-    if (!req.payload) return []
-    const res = await req.payload.find({
-        collection: asCollectionSlug('sites'),
-        where: { organization: { equals: orgId } },
-        limit: 0,
-        pagination: false,
-        depth: 0,
-        overrideAccess: true,
-    })
-    const ids = res.docs.map((doc) => doc.id)
-    byOrg.set(key, ids)
-    return ids
+    const payload = req.payload
+    if (!payload) return []
+    const pending = payload
+        .find({
+            collection: asCollectionSlug('sites'),
+            where: { organization: { equals: orgId } },
+            limit: 0,
+            pagination: false,
+            depth: 0,
+            select: { id: true },
+            overrideAccess: true,
+        })
+        .then((res) => res.docs.map((doc) => doc.id))
+    byOrg.set(key, pending)
+    // A failed lookup is not kept: the next rule of the request asks afresh.
+    pending.catch(() => byOrg.delete(key))
+    return pending
 }
 
 async function orgScopeFor(req: SiteLookup, orgId: string | number, siteField: string) {

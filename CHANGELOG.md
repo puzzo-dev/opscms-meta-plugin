@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2
+
+### Fixed
+
+- **An admin's page load no longer fires a dozen of the heaviest queries at once.** To scope an admin to the sites of their organization, each
+  collection's access rule looked the sites up, reading whole site rows (every menu, footer column and translation) just to keep the ids, and
+  all of a request's rules did so at the same moment, each sending its own copy. For an admin with several sites that was enough to time the
+  database out ("Failed query: select ... from sites ..."). The lookup now asks for the ids alone and the rules of one request share one query.
+
 ## 0.4.1
 
 ### Changed
