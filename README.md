@@ -145,7 +145,7 @@ Uses the one platform-level Meta App the host passes in (see [Set the encryption
 
 ### Connecting Threads
 
-Threads is a **separate product/API** from Facebook and Instagram — its own OAuth host (`threads.net`, not `facebook.com`), its own token host (`graph.threads.net`, not `graph.facebook.com`), and its own token/profile shape — even though it's added as a product on the *same* Meta App and reuses the same platform-level `META_APP_ID`/`META_APP_SECRET`.
+Threads is a **separate product/API** from Facebook and Instagram — its own OAuth host (`threads.net`, not `facebook.com`), its own token host (`graph.threads.net`, not `graph.facebook.com`), and its own token/profile shape — even though it's added as a product on the *same* Meta App and reuses the same platform-level the app ID/the app secret.
 
 1. Add the **Threads API** product to the same Meta App (see setup step above), and register `{PAYLOAD_PUBLIC_SERVER_URL}/api/threads-oauth/callback` as its redirect URI.
 2. On the **🧵 Threads** tab, click **Connect Threads** — separate consent screen (`threads_basic`, `threads_content_publish`), separate callback, separate stored token (`threadsAccessToken`). Connecting Threads does not affect or require the Facebook/Instagram connection above, or vice versa.
