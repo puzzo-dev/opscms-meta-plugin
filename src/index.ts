@@ -58,8 +58,9 @@ export interface MetaPluginOptions {
     host?: MetaHost
     /**
      * The platform's Meta app (App ID, secret, webhook verify token), as the host keeps it in its own settings. Called whenever the plugin needs it, so
-     * keep it quick (answer from memory). What it returns wins over the `META_APP_ID`, `META_APP_SECRET` and `META_WEBHOOK_VERIFY_TOKEN`
-     * environment variables, which remain the fallback; a host that gives nothing here keeps working from the environment as before.
+     * keep it quick (answer from memory). It is the ONLY source: the plugin does not read the app from the server's environment, so a host that does
+     * not pass this leaves Meta Connect, Facebook login and the webhook switched off. (`META_ENCRYPTION_KEY`, the key that protects what is stored,
+     * is still read from the environment.)
      */
     app?: () => MetaAppSettings | null | undefined
 }

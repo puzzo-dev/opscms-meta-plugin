@@ -131,8 +131,8 @@ export function decryptCredential(stored: string): string {
 // OAuth Client doctype) serves every tenant site, same pattern as Buffer/
 // Hootsuite/Zapier: the App ID/Secret identify the INTEGRATION, not any one
 // site's Facebook Page — each site still does its own OAuth consent to link
-// its own Page/IG/Pixel. Read from the host's settings, else from env (never per-site
-// DB fields), so no site owner ever needs to create a Meta App or handle a Secret.
+// its own Page/IG/Pixel. Read from the host's settings (never per-site DB fields), so
+// no site owner ever needs to create a Meta App or handle a Secret.
 
 /** What a host CMS says the platform's Meta app is (typed into its own settings, not set on the server). Any part may be missing. */
 export interface MetaAppSettings {
@@ -145,8 +145,8 @@ let appProvider: (() => MetaAppSettings | null | undefined) | null = null
 
 /**
  * The host CMS gives the plugin the platform's Meta app (`metaPlugin({ app })`), read when it is needed, so a value changed in the host's settings
- * is used at once and nothing has to be set on the server. What the host gives wins; the environment variables below are the fallback for a host that
- * gives none (or part of it).
+ * is used at once. There is no other source: nothing is read from the server's environment, so there is one place the app is set and no second
+ * value that could disagree with it. A host that gives nothing leaves the app not configured.
  */
 export function setMetaAppProvider(provider: (() => MetaAppSettings | null | undefined) | null | undefined): void {
     appProvider = provider ?? null
@@ -161,11 +161,7 @@ function metaAppSettings(): { appId?: string; appSecret?: string; webhookVerifyT
     } catch {
         given = null // a host that cannot answer is the same as one that gave nothing
     }
-    return {
-        appId: text(given?.appId) ?? text(process.env.META_APP_ID),
-        appSecret: text(given?.appSecret) ?? text(process.env.META_APP_SECRET),
-        webhookVerifyToken: text(given?.webhookVerifyToken) ?? text(process.env.META_WEBHOOK_VERIFY_TOKEN),
-    }
+    return { appId: text(given?.appId), appSecret: text(given?.appSecret), webhookVerifyToken: text(given?.webhookVerifyToken) }
 }
 
 export function getMetaAppCredentials(): { appId: string; appSecret: string } | null {

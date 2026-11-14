@@ -46,8 +46,6 @@ beforeEach(() => {
     process.env = { ...ORIGINAL_ENV }
     delete process.env.META_ENCRYPTION_KEY
     delete process.env.META_OAUTH_STATE_SECRET
-    delete process.env.META_APP_ID
-    delete process.env.META_APP_SECRET
     setNodeEnv('test')
 })
 
@@ -177,41 +175,38 @@ describe('signOAuthState / verifyOAuthState', () => {
 })
 
 describe('getMetaAppCredentials / getMaskedMetaAppId', () => {
-    it('returns null when the Meta App is not configured', async () => {
-        const { getMetaAppCredentials, getMaskedMetaAppId } = await loadCrypto({})
+    it('returns null when the host gives no Meta App, and ignores the environment', async () => {
+        const { getMetaAppCredentials, getMaskedMetaAppId, setMetaAppProvider } = await loadCrypto({})
+        setMetaAppProvider(null)
         assert.equal(getMetaAppCredentials(), null)
         assert.equal(getMaskedMetaAppId(), null)
+        // The variables the plugin used to read are not read any more: the host's settings are the one place.
+        process.env.META_APP_ID = '1234567890'
+        process.env.META_APP_SECRET = 'super-secret'
+        assert.equal(getMetaAppCredentials(), null)
     })
 
-    it('reads the App ID and Secret from the environment', async () => {
-        const { getMetaAppCredentials } = await loadCrypto({
-            META_APP_ID: '1234567890',
-            META_APP_SECRET: 'super-secret',
-        })
+    it('takes the App ID and Secret from the host', async () => {
+        const { getMetaAppCredentials, setMetaAppProvider } = await loadCrypto({})
+        setMetaAppProvider(() => ({ appId: '1234567890', appSecret: 'super-secret' }))
         assert.deepEqual(getMetaAppCredentials(), { appId: '1234567890', appSecret: 'super-secret' })
     })
 
     it('requires both halves — an App ID alone is not usable', async () => {
-        const { getMetaAppCredentials } = await loadCrypto({
-            META_APP_ID: '1234567890',
-            META_APP_SECRET: undefined,
-        })
+        const { getMetaAppCredentials, setMetaAppProvider } = await loadCrypto({})
+        setMetaAppProvider(() => ({ appId: '1234567890', appSecret: undefined }))
         assert.equal(getMetaAppCredentials(), null)
     })
 
     it('masks the App ID down to its last four characters', async () => {
-        const { getMaskedMetaAppId } = await loadCrypto({
-            META_APP_ID: '1234567890',
-            META_APP_SECRET: 'x',
-        })
+        const { getMaskedMetaAppId, setMetaAppProvider } = await loadCrypto({})
+        setMetaAppProvider(() => ({ appId: '1234567890', appSecret: 'x' }))
         assert.equal(getMaskedMetaAppId(), '••••7890')
     })
 
     it('never exposes the App Secret through the masking helper', async () => {
-        const { getMaskedMetaAppId } = await loadCrypto({
-            META_APP_ID: '1234567890',
-            META_APP_SECRET: 'super-secret',
-        })
+        const { getMaskedMetaAppId, setMetaAppProvider } = await loadCrypto({})
+        setMetaAppProvider(() => ({ appId: '1234567890', appSecret: 'super-secret' }))
         assert.ok(!String(getMaskedMetaAppId()).includes('super-secret'))
     })
 })

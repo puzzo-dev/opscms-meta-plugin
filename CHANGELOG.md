@@ -2,12 +2,13 @@
 
 ## 0.6.0
 
-### Added
+### Changed (breaking)
 
-- **The host can give the plugin the platform's Meta app.** `metaPlugin({ app: () => ({ appId, appSecret, webhookVerifyToken }) })`: the plugin asks
-  for it when it needs it, so a host that keeps the app in its own settings needs nothing set on the server, and a change is used at once. What the host
-  gives wins; `META_APP_ID`, `META_APP_SECRET` and `META_WEBHOOK_VERIFY_TOKEN` stay as the fallback, so a host that passes nothing works as before.
-  (`META_ENCRYPTION_KEY` is not part of this: it is the key that protects what is stored, so it stays on the server.)
+- **The platform's Meta app comes from the host, and only from the host.** `metaPlugin({ app: () => ({ appId, appSecret, webhookVerifyToken }) })`: the
+  plugin asks for it when it needs it, so a host that keeps the app in its own settings needs nothing on the server, and a change is used at once.
+  `META_APP_ID`, `META_APP_SECRET` and `META_WEBHOOK_VERIFY_TOKEN` are **no longer read**: one place to set the app, no second value that can disagree.
+  A host that passes no `app` has Meta Connect, Facebook login and the webhook switched off. (`META_ENCRYPTION_KEY` and `META_OAUTH_STATE_SECRET` are
+  not part of this: they protect what is stored and signed, so they stay on the server.)
 
 ## 0.4.2
 

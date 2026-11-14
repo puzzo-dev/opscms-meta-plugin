@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 import type { Payload, PayloadRequest } from 'payload'
 
 import { createMetaWebhookEndpoints } from '../../src/endpoints/metaWebhook'
+import { setMetaAppProvider } from '../../src/utils/metaCrypto'
 import type { MetaHost } from '../../src/types/host'
 import { subscribeWabaToApp, unsubscribeWabaFromApp } from '../../src/utils/wabaSubscription'
 import { handshakeChallenge, signatureMatches } from '../../src/webhook/signature'
@@ -118,14 +119,10 @@ describe('the endpoint', () => {
     beforeEach(() => {
         emitted = []
         hostFails = false
-        process.env.META_APP_ID = 'app-id'
-        process.env.META_APP_SECRET = SECRET
-        process.env.META_WEBHOOK_VERIFY_TOKEN = 'verify-me'
+        setMetaAppProvider(() => ({ appId: 'app-id', appSecret: SECRET, webhookVerifyToken: 'verify-me' }))
     })
     afterEach(() => {
-        delete process.env.META_APP_ID
-        delete process.env.META_APP_SECRET
-        delete process.env.META_WEBHOOK_VERIFY_TOKEN
+        setMetaAppProvider(null)
     })
 
     const [handshake, receive] = createMetaWebhookEndpoints(host)
@@ -152,7 +149,7 @@ describe('the endpoint', () => {
     })
 
     it('refuses every delivery when the server has no Meta app secret', async () => {
-        delete process.env.META_APP_SECRET
+        setMetaAppProvider(() => ({ appId: 'app-id', webhookVerifyToken: 'verify-me' })) // no secret
         const body = JSON.stringify(delivery([statusChange('APPROVED')]))
         assert.equal((await post(body, sign(body))).status, 503)
     })

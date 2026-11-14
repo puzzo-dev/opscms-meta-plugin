@@ -122,7 +122,7 @@ export interface MetaAppInfo {
     loading: boolean
 }
 
-/** Fetches whether the platform-level Meta App (META_APP_ID/META_APP_SECRET) is configured — shared by MetaConnectPanel and ThreadsConnectPanel, both of which gate their Connect button on it. */
+/** Fetches whether the platform-level Meta App (given by the host) is configured — shared by MetaConnectPanel and ThreadsConnectPanel, both of which gate their Connect button on it. */
 export function useMetaAppInfo(): MetaAppInfo {
     const [state, setState] = React.useState<MetaAppInfo>({ configured: false, maskedAppId: null, loading: true })
 
@@ -140,7 +140,7 @@ export function useMetaAppInfo(): MetaAppInfo {
 export const MetaAppInfoBadge: React.FC<{ appInfo: MetaAppInfo }> = ({ appInfo }) => {
     if (appInfo.loading) return null
     if (!appInfo.configured) {
-        return <ErrorState message="Meta App not configured on this deployment — the platform owner needs to enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET)." />
+        return <ErrorState message="Meta App not configured on this deployment — the platform owner needs to enter its App ID and secret in Platform Settings." />
     }
     return (
         <div style={{ ...messageBoxStyle('info'), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

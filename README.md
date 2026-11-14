@@ -87,18 +87,18 @@ export default buildConfig({
 ```bash
 # .env
 META_ENCRYPTION_KEY=$(openssl rand -hex 32)
-META_APP_ID=your-meta-app-id
-META_APP_SECRET=your-meta-app-secret
 ```
+
+The Meta App itself is **not** set in the environment: the host CMS passes it in (`metaPlugin({ app: () => ({ appId, appSecret, webhookVerifyToken }) })`), from wherever it keeps its own settings (OpsCMS: Platform Settings → Meta app). A host that passes no `app` has Meta Connect, Facebook login and the webhook switched off.
 
 Without `META_ENCRYPTION_KEY`, credentials are stored in plain text (allowed in development; the plugin **fails fast at startup in production** unless you explicitly set `ALLOW_PLAINTEXT_META_CREDS=true`, which you should not do).
 
-`META_APP_ID`/`META_APP_SECRET` are the **one Meta App for the whole deployment** — same pattern as Buffer/Hootsuite/Zapier: every tenant site connects through this single App, they never create their own. There's no API to create a Meta App programmatically (unlike, say, ERPNext's OAuth Client doctype), so this is a one-time manual step:
+The App ID and secret the host passes are the **one Meta App for the whole deployment** — same pattern as Buffer/Hootsuite/Zapier: every tenant site connects through this single App, they never create their own. There's no API to create a Meta App programmatically (unlike, say, ERPNext's OAuth Client doctype), so this is a one-time manual step:
 
 1. Create an App at [developers.facebook.com](https://developers.facebook.com), add the **Facebook Login for Business** product (and **Threads API** if you'll connect Threads).
 2. Add `{PAYLOAD_PUBLIC_SERVER_URL}/api/meta-oauth/callback` and `{PAYLOAD_PUBLIC_SERVER_URL}/api/threads-oauth/callback` as **Valid OAuth Redirect URIs**.
 3. Switch the App to **Live** mode and request **Advanced Access** (via App Review) for whichever scopes you need — `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `business_management`, `ads_management`, etc. In Development mode, OAuth only works for users added as Testers/Admins/Developers on the App itself — real tenant site owners won't be able to connect until this is done. Meta may also require **Business Verification** for the ads/marketing-adjacent scopes.
-4. Set `META_APP_ID`/`META_APP_SECRET` from that App's Settings → Basic page and restart.
+4. Give the host the App ID and App secret from that App's Settings → Basic page (OpsCMS: Platform Settings → Meta app). It is used at once; no restart.
 
 Site owners never see or enter these — the admin UI shows only a masked, read-only App ID (`GET /api/meta-oauth/app-info`) so they can confirm a platform App is configured before clicking Connect.
 
@@ -136,7 +136,7 @@ Paste a long-lived Page or System User access token directly into `accessToken` 
 
 ### Option B — Connect to Meta Business (OAuth)
 
-Uses the one platform-level Meta App set up via `META_APP_ID`/`META_APP_SECRET` (see [Set the encryption key and the platform Meta App](#2-set-the-encryption-key-and-the-platform-meta-app) — that's a one-time deployment setup step, not something each site does). Once that's configured:
+Uses the one platform-level Meta App the host passes in (see [Set the encryption key and the platform Meta App](#2-set-the-encryption-key-and-the-platform-meta-app) — that's a one-time deployment setup step, not something each site does). Once that's configured:
 
 1. On the `meta-config` document's 🔑 Connection tab, the panel shows a masked, read-only **Platform Meta App** ID confirming it's configured.
 2. Click **Connect to Meta Business** — you'll be redirected to Meta's OAuth consent screen requesting `business_management`, `pages_show_list`, `pages_read_engagement`, `pages_manage_metadata`, `instagram_basic`, `ads_management`, `catalog_management`, and `whatsapp_business_management` (trim the scope list in `metaOAuth.ts` if your App's review doesn't cover all of them — Meta simply omits ungranted permissions from the resulting token rather than failing the whole flow).
@@ -167,7 +167,7 @@ export interface MetaPluginOptions {
 
 | Variable | Required | Description |
 |---|---|---|
-| `META_APP_ID` / `META_APP_SECRET` | For OAuth Connect | The one Meta App for the whole deployment (developers.facebook.com) — every tenant site's Connect button uses this. Not required if every site only ever uses manual Access Token entry. Never entered by a site owner; see [Set the encryption key and the platform Meta App](#2-set-the-encryption-key-and-the-platform-meta-app). |
+| *(the host's `app` option)* | For OAuth Connect | The one Meta App for the whole deployment (developers.facebook.com) — every tenant site's Connect button uses this. Not required if every site only ever uses manual Access Token entry. Not an environment variable, and never entered by a site owner; see [Set the encryption key and the platform Meta App](#2-set-the-encryption-key-and-the-platform-meta-app). |
 | `META_ENCRYPTION_KEY` | Production: yes | 32-byte hex key (`openssl rand -hex 32`) for AES-256-GCM credential encryption. Separate from `opscms-erpnext-plugin`'s `ERPNEXT_ENCRYPTION_KEY` — rotating one doesn't affect the other. |
 | `ALLOW_PLAINTEXT_META_CREDS` | No | Set to `true` to explicitly allow plain-text credential storage in production. Do not set this unless you understand the risk (a DB dump/backup leaks every tenant's Meta access token). |
 | `PAYLOAD_PUBLIC_SERVER_URL` | For Catalog feed + OAuth | Used to build absolute image URLs in the Commerce Catalog feed, and the OAuth callback redirect URIs (`/api/meta-oauth/callback`, `/api/threads-oauth/callback`). Already set for the host CMS's other public-facing needs. |
@@ -177,7 +177,7 @@ export interface MetaPluginOptions {
 
 ## The `meta-config` Collection
 
-One document per site. `appId`/`appSecret` are **not** fields here — they're the one platform-level Meta App (`META_APP_ID`/`META_APP_SECRET`), never per-site. Every other credential field is directly editable (manual entry) — the Connect buttons are a convenience layer on top, not a replacement:
+One document per site. `appId`/`appSecret` are **not** fields here — they're the one platform-level Meta App the host passes in, never per-site. Every other credential field is directly editable (manual entry) — the Connect buttons are a convenience layer on top, not a replacement:
 
 | Tab | Fields | Notes |
 |---|---|---|
@@ -298,8 +298,8 @@ MIT
 
 Meta reports what happens on its side to one callback address per app. Register
 `https://<your CMS>/api/meta-webhook` as the callback of the platform's Meta app, for the
-**WhatsApp Business Account** topic, with the verify token from `META_WEBHOOK_VERIFY_TOKEN`.
-The app secret (`META_APP_SECRET`) must also be set: every delivery is signed with it, and a
+**WhatsApp Business Account** topic, with the verify token the host passes in (`webhookVerifyToken`).
+The app secret must also be set: every delivery is signed with it, and a
 delivery with a missing or wrong signature is refused with 401.
 
 Each site's business account is subscribed to the app when the site chooses its WhatsApp
@@ -329,7 +329,7 @@ The plugin adds "Continue with Facebook" to the platform's login page, using the
 
 - **Who gets in:** someone who already has a platform account. Their Facebook email must be the same as their platform email to join the
   two; after that they sign in by Facebook id. Signing in never creates an account, and an account is never matched on a different email.
-- **Setup:** `META_APP_ID` and `META_APP_SECRET` on the server, the Facebook Login product on the Meta app, and
+- **Setup:** the Meta app given to the plugin by the host, the Facebook Login product on the Meta app, and
   `<PAYLOAD_PUBLIC_SERVER_URL>/api/meta-login/callback` listed as a valid OAuth redirect URI. Only `email` and `public_profile` are
   requested, which need no App Review.
 - **Database:** the plugin adds a unique `facebookId` field to the users collection; the platform needs a migration for the column.

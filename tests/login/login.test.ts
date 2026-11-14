@@ -5,6 +5,7 @@ import { APIError } from 'payload'
 import type { Payload, PayloadRequest } from 'payload'
 
 import { createMetaLoginEndpoints } from '../../src/endpoints/metaLogin'
+import { setMetaAppProvider } from '../../src/utils/metaCrypto'
 import type { Endpoint } from 'payload'
 import { fetchLoginProfile, exchangeLoginCode } from '../../src/login/facebook'
 import { resolveLoginUser } from '../../src/login/resolveUser'
@@ -82,8 +83,7 @@ beforeEach(() => {
     calls.length = 0
     rateAllowed = true
     beforeLoginRefuses = false
-    process.env.META_APP_ID = '111'
-    process.env.META_APP_SECRET = 'app-secret'
+    setMetaAppProvider(() => ({ appId: '111', appSecret: 'app-secret' }))
     process.env.PAYLOAD_PUBLIC_SERVER_URL = 'https://cms.example.test'
     facebook = (url) => {
         if (url.includes('/oauth/access_token')) return respond({ access_token: 'user-token' })
@@ -219,7 +219,7 @@ describe('accounts that never sign in through Facebook', () => {
 describe('starting a sign-in', () => {
     it('says whether Meta is set up here', async () => {
         assert.deepEqual(await (await endpoints().status.handler(reqFor('https://cms.example.test/api/meta-login/status'))).json(), { enabled: true })
-        delete process.env.META_APP_SECRET
+        setMetaAppProvider(() => ({ appId: '111' })) // no secret
         assert.deepEqual(await (await endpoints().status.handler(reqFor('https://cms.example.test/api/meta-login/status'))).json(), { enabled: false })
     })
 
@@ -236,10 +236,10 @@ describe('starting a sign-in', () => {
     })
 
     it('goes back to the login page when Meta is not set up, and is throttled', async () => {
-        delete process.env.META_APP_ID
+        setMetaAppProvider(() => ({ appSecret: 'app-secret' })) // no id
         const off = await endpoints().start.handler(reqFor('https://cms.example.test/api/meta-login/start'))
         assert.equal(off.headers.get('location'), 'https://cms.example.test/admin/login?fb_error=not_configured')
-        process.env.META_APP_ID = '111'
+        setMetaAppProvider(() => ({ appId: '111', appSecret: 'app-secret' }))
         rateAllowed = false
         assert.equal((await endpoints().start.handler(reqFor('https://cms.example.test/api/meta-login/start'))).status, 429)
     })

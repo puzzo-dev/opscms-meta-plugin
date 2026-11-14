@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, it } from 'node:test'
 
 import { getMaskedMetaAppId, getMetaAppCredentials, getMetaWebhookVerifyToken, setMetaAppProvider } from '../../src/utils/metaCrypto'
 
-/** The platform's Meta app comes from the host's settings when the host gives it, and from the environment otherwise. */
+/** The platform's Meta app comes from the host's settings, and from nowhere else. */
 const NAMES = ['META_APP_ID', 'META_APP_SECRET', 'META_WEBHOOK_VERIFY_TOKEN'] as const
 const saved: Record<string, string | undefined> = {}
 
@@ -17,13 +17,13 @@ afterEach(() => {
 })
 
 describe('the platform\'s Meta app', () => {
-    it('is nothing when neither the host nor the environment gives it', () => {
+    it('is nothing when the host gives none', () => {
         assert.equal(getMetaAppCredentials(), null)
         assert.equal(getMetaWebhookVerifyToken(), undefined)
         assert.equal(getMaskedMetaAppId(), null)
     })
 
-    it('comes from the host\'s settings, with no environment variable set', () => {
+    it('comes from the host\'s settings', () => {
         setMetaAppProvider(() => ({ appId: ' 123456789 ', appSecret: 'shh', webhookVerifyToken: 'tok' }))
         assert.deepEqual(getMetaAppCredentials(), { appId: '123456789', appSecret: 'shh' })
         assert.equal(getMetaWebhookVerifyToken(), 'tok')
@@ -38,22 +38,20 @@ describe('the platform\'s Meta app', () => {
         assert.equal(getMetaAppCredentials()?.appId, 'two')
     })
 
-    it('prefers what the host gives, and falls back to the environment for what it leaves out', () => {
+    it('is never read from the environment, with or without a host', () => {
         process.env.META_APP_ID = 'env-id'
         process.env.META_APP_SECRET = 'env-secret'
         process.env.META_WEBHOOK_VERIFY_TOKEN = 'env-token'
+        assert.equal(getMetaAppCredentials(), null)
+        assert.equal(getMetaWebhookVerifyToken(), undefined)
         setMetaAppProvider(() => ({ appId: 'host-id', appSecret: '', webhookVerifyToken: null }))
-        assert.deepEqual(getMetaAppCredentials(), { appId: 'host-id', appSecret: 'env-secret' })
-        assert.equal(getMetaWebhookVerifyToken(), 'env-token')
-        setMetaAppProvider(null)
-        assert.deepEqual(getMetaAppCredentials(), { appId: 'env-id', appSecret: 'env-secret' }, 'a host that gives nothing works from the environment, as before')
+        assert.equal(getMetaAppCredentials(), null, 'the host\'s missing secret is not filled in from the environment')
+        assert.equal(getMetaWebhookVerifyToken(), undefined)
     })
 
     it('treats a host that fails to answer as one that gave nothing', () => {
-        process.env.META_APP_ID = 'env-id'
-        process.env.META_APP_SECRET = 'env-secret'
         setMetaAppProvider(() => { throw new Error('not ready') })
-        assert.deepEqual(getMetaAppCredentials(), { appId: 'env-id', appSecret: 'env-secret' })
+        assert.equal(getMetaAppCredentials(), null)
     })
 
     it('needs both the id and the secret', () => {

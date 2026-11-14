@@ -12,7 +12,7 @@ import { templateEventsFrom } from '../webhook/templateEvents'
  * The plugin's webhook: the address Meta calls to report what happens on its side.
  *
  * Register `https://<your CMS>/api/meta-webhook` as the callback of the platform's Meta app, for the WhatsApp business account
- * topic, with the verify token set in the host's Meta app settings (or `META_WEBHOOK_VERIFY_TOKEN`). Each site's business account is subscribed to the app when
+ * topic, with the verify token set in the host's Meta app settings. Each site's business account is subscribed to the app when
  * the site connects (see utils/wabaSubscription.ts), so its events arrive here.
  *
  *  - GET answers Meta's handshake.

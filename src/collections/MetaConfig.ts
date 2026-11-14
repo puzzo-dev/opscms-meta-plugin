@@ -126,7 +126,7 @@ const testMetaConnection: CollectionAfterChangeHook = async ({ doc, previousDoc,
  * each tab — nothing here assumes every site wants Pixel + Catalog + WhatsApp.
  *
  * UX Flow — one platform Meta App, then each site owner logs in:
- *   META_APP_ID and META_APP_SECRET are set once for the deployment. A site
+ *   The Meta app (App ID and secret) is entered once, by the platform owner, in the host's settings. A site
  *   owner clicks Log in with Facebook, which opens Meta's login popup. The
  *   login writes the Page, Instagram account, catalog, Pixel, and WhatsApp
  *   number onto this document. Those fields stay read-only. Disconnect is
@@ -268,7 +268,7 @@ export const MetaConfig: CollectionConfig = {
                 // ── Tab 1: Connection ────────────────────────────────
                 {
                     label: '🔑 Connection',
-                    description: 'META_APP_ID and META_APP_SECRET are set for the whole deployment. Log in with Facebook below. The fields fill in from that login and stay read-only. Disconnect clears them.',
+                    description: 'The Meta app is set once for the whole platform (by the platform owner, in its settings). Log in with Facebook below. The fields fill in from that login and stay read-only. Disconnect clears them.',
                     fields: [
                         {
                             name: 'accessToken',

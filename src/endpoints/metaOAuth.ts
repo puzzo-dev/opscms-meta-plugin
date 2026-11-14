@@ -74,8 +74,8 @@ async function loadConfig(payload: Parameters<Endpoint['handler']>[0]['payload']
 }
 
 // ── GET /meta-oauth/app-info ────────────────────────────────────────────────
-// Tells the admin UI whether the platform-level Meta App (META_APP_ID/
-// META_APP_SECRET) is configured, and a masked App ID to display — never the
+// Tells the admin UI whether the platform-level Meta App (given by the host)
+// is configured, and a masked App ID to display — never the
 // secret. No configId needed: this is deployment-wide, not per-site.
 export const metaOAuthAppInfoEndpoint: Endpoint = {
     path: '/meta-oauth/app-info',
@@ -110,7 +110,7 @@ export const metaOAuthStartEndpoint: Endpoint = {
 
         const appCreds = getMetaAppCredentials()
         if (!appCreds) {
-            return Response.json({ error: 'Meta App not configured on this deployment — enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET).' }, { status: 400 })
+            return Response.json({ error: 'Meta App not configured on this deployment — enter its App ID and secret in Platform Settings.' }, { status: 400 })
         }
 
         const state = signOAuthState(configId)
@@ -156,7 +156,7 @@ export const metaOAuthCallbackEndpoint: Endpoint = {
 
         const appCreds = getMetaAppCredentials()
         if (!appCreds) {
-            return oauthFinished({ ok: false, configId, error: 'Meta App not configured on this deployment — enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET).' })
+            return oauthFinished({ ok: false, configId, error: 'Meta App not configured on this deployment — enter its App ID and secret in Platform Settings.' })
         }
 
         // Step 1: code -> short-lived user access token

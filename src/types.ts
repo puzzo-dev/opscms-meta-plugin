@@ -79,7 +79,7 @@ export function callerOwnsConfigSite(req: { user?: unknown }, config: Record<str
     return siteMatches || orgMatches
 }
 
-/** Resolved Meta API credentials for a single site, decrypted and ready to use. appId/appSecret are deployment-wide (META_APP_ID/META_APP_SECRET, see utils/metaCrypto.ts), not part of a site's credentials. */
+/** Resolved Meta API credentials for a single site, decrypted and ready to use. appId/appSecret are deployment-wide (given by the host, see utils/metaCrypto.ts), not part of a site's credentials. */
 export interface MetaCredentials {
     accessToken: string
     businessManagerId?: string
