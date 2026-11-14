@@ -507,6 +507,25 @@ export const MetaConfig: CollectionConfig = {
                     description: 'Official WhatsApp for this site. Choose the number in the connect flow after Facebook login. Alert messages are prepared for you, and Meta reviews them — you can leave the page while that happens. Leave this off to keep the OpenWA bridge.',
                     fields: [
                         {
+                            // Meta calls one address for the whole app, so this is the same for every site; shown here so nobody has to look it up.
+                            name: 'webhookUrl',
+                            type: 'text',
+                            virtual: true,
+                            label: 'Webhook address',
+                            admin: {
+                                readOnly: true,
+                                description: 'Meta reports template approvals and other WhatsApp changes to this address. Paste it as the Callback URL of the Meta app (WhatsApp Business Account topic) once for the whole platform; every connected site is covered. Nothing else has to be created.',
+                            },
+                            hooks: {
+                                afterRead: [
+                                    () => {
+                                        const server = (process.env.PAYLOAD_PUBLIC_SERVER_URL ?? '').replace(/\/+$/, '')
+                                        return server ? `${server}/api/meta-webhook` : ''
+                                    },
+                                ],
+                            },
+                        },
+                        {
                             name: 'whatsappEnabled',
                             type: 'checkbox',
                             defaultValue: false,
