@@ -144,7 +144,7 @@ export const MetaConfig: CollectionConfig = {
     admin: {
         useAsTitle: 'label',
         defaultColumns: ['label', 'site', 'connectionStatus', 'isActive', 'updatedAt'],
-        group: 'Integrations',
+        group: 'Meta Business Suite',
         description: 'Connect this site to Meta (Facebook/Instagram/WhatsApp). Enable only the channels this site needs.',
     },
     access: {

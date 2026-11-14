@@ -16,7 +16,7 @@ export const MetaApprovals: CollectionConfig = {
     admin: {
         useAsTitle: 'templateKey',
         defaultColumns: ['templateKey', 'site', 'status', 'rejectionReason', 'updatedAt'],
-        group: 'Integrations',
+        group: 'Meta Business Suite',
         // Internal bookkeeping. The status shows on the notification template.
         hidden: true,
     },
