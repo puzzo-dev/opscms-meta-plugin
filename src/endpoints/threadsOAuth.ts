@@ -64,7 +64,7 @@ export const threadsOAuthStartEndpoint: Endpoint = {
 
         const appCreds = getMetaAppCredentials()
         if (!appCreds) {
-            return Response.json({ error: 'Meta App not configured on this deployment — set META_APP_ID and META_APP_SECRET.' }, { status: 400 })
+            return Response.json({ error: 'Meta App not configured on this deployment — enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET).' }, { status: 400 })
         }
 
         const state = signOAuthState(configId)
@@ -111,7 +111,7 @@ export const threadsOAuthCallbackEndpoint: Endpoint = {
 
         const appCreds = getMetaAppCredentials()
         if (!appCreds) {
-            return Response.redirect(`${adminBase}/${configId}?threads_oauth_error=${encodeURIComponent('Meta App not configured on this deployment — set META_APP_ID and META_APP_SECRET.')}`, 302)
+            return Response.redirect(`${adminBase}/${configId}?threads_oauth_error=${encodeURIComponent('Meta App not configured on this deployment — enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET).')}`, 302)
         }
 
         // Step 1: code -> short-lived Threads user token

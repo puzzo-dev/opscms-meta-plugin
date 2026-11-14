@@ -140,7 +140,7 @@ export function useMetaAppInfo(): MetaAppInfo {
 export const MetaAppInfoBadge: React.FC<{ appInfo: MetaAppInfo }> = ({ appInfo }) => {
     if (appInfo.loading) return null
     if (!appInfo.configured) {
-        return <ErrorState message="Meta App not configured on this deployment — an admin needs to set META_APP_ID and META_APP_SECRET." />
+        return <ErrorState message="Meta App not configured on this deployment — the platform owner needs to enter its App ID and secret in Platform Settings (or set META_APP_ID and META_APP_SECRET)." />
     }
     return (
         <div style={{ ...messageBoxStyle('info'), display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

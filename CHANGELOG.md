@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0
+
+### Added
+
+- **The host can give the plugin the platform's Meta app.** `metaPlugin({ app: () => ({ appId, appSecret, webhookVerifyToken }) })`: the plugin asks
+  for it when it needs it, so a host that keeps the app in its own settings needs nothing set on the server, and a change is used at once. What the host
+  gives wins; `META_APP_ID`, `META_APP_SECRET` and `META_WEBHOOK_VERIFY_TOKEN` stay as the fallback, so a host that passes nothing works as before.
+  (`META_ENCRYPTION_KEY` is not part of this: it is the key that protects what is stored, so it stays on the server.)
+
 ## 0.4.2
 
 ### Fixed

@@ -2,7 +2,7 @@ import type { Endpoint } from 'payload'
 
 import { asCollectionSlug } from '../types'
 import type { MetaHost } from '../types/host'
-import { getMetaAppCredentials } from '../utils/metaCrypto'
+import { getMetaAppCredentials, getMetaWebhookVerifyToken } from '../utils/metaCrypto'
 import { statusFromMeta } from '../templates/graph'
 import { applyStatusChange, findRecordForReport } from '../templates/sync'
 import { handshakeChallenge, signatureMatches } from '../webhook/signature'
@@ -12,7 +12,7 @@ import { templateEventsFrom } from '../webhook/templateEvents'
  * The plugin's webhook: the address Meta calls to report what happens on its side.
  *
  * Register `https://<your CMS>/api/meta-webhook` as the callback of the platform's Meta app, for the WhatsApp business account
- * topic, with the verify token set in `META_WEBHOOK_VERIFY_TOKEN`. Each site's business account is subscribed to the app when
+ * topic, with the verify token set in the host's Meta app settings (or `META_WEBHOOK_VERIFY_TOKEN`). Each site's business account is subscribed to the app when
  * the site connects (see utils/wabaSubscription.ts), so its events arrive here.
  *
  *  - GET answers Meta's handshake.
@@ -28,7 +28,7 @@ export function createMetaWebhookEndpoints(host?: MetaHost): Endpoint[] {
         path: '/meta-webhook',
         method: 'get',
         handler: async (req) => {
-            const challenge = handshakeChallenge(req.query as Record<string, unknown> | undefined, process.env.META_WEBHOOK_VERIFY_TOKEN)
+            const challenge = handshakeChallenge(req.query as Record<string, unknown> | undefined, getMetaWebhookVerifyToken())
             if (challenge === null) return Response.json({ error: 'Verification failed' }, { status: 403 })
             // Meta expects the challenge echoed back as the raw body.
             return new Response(challenge, { status: 200, headers: { 'content-type': 'text/plain' } })

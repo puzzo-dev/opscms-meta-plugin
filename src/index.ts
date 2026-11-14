@@ -36,6 +36,7 @@ import { createTemplateStatusJob } from './jobs/templateStatus'
 import { attachTemplateHooks } from './templates/hooks'
 import type { MetaHost } from './types/host'
 import { registerNotificationChannel } from './channels/registry'
+import { setMetaAppProvider, type MetaAppSettings } from './utils/metaCrypto'
 
 /** Minimal interface for the CMS action registry — same shape opscms-erpnext-plugin uses. */
 export interface ActionRegistryRef {
@@ -55,6 +56,12 @@ export interface MetaPluginOptions {
      * accepts Meta's deliveries, but nobody is told.
      */
     host?: MetaHost
+    /**
+     * The platform's Meta app (App ID, secret, webhook verify token), as the host keeps it in its own settings. Called whenever the plugin needs it, so
+     * keep it quick (answer from memory). What it returns wins over the `META_APP_ID`, `META_APP_SECRET` and `META_WEBHOOK_VERIFY_TOKEN`
+     * environment variables, which remain the fallback; a host that gives nothing here keeps working from the environment as before.
+     */
+    app?: () => MetaAppSettings | null | undefined
 }
 
 /**
@@ -86,6 +93,7 @@ export interface MetaPluginOptions {
  * payload-cms/docs/future-features.md and this package's README.md.
  */
 export function metaPlugin(options: MetaPluginOptions = {}): Plugin {
+    setMetaAppProvider(options.app)
     if (options.registry) {
         options.registry.register('meta-conversion-event', metaConversionEventHandler)
     }
@@ -259,3 +267,5 @@ export { facebookIdField, attachFacebookLogin } from './fields/facebookIdField'
 export { resolveLoginUser } from './login/resolveUser'
 export type { FacebookLoginFailure, FacebookProfile } from './types/login'
 export { subscribeWabaToApp, unsubscribeWabaFromApp } from './utils/wabaSubscription'
+
+export type { MetaAppSettings } from './utils/metaCrypto'
