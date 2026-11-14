@@ -187,7 +187,7 @@ One document per site. `appId`/`appSecret` are **not** fields here — they're t
 | 💬 WhatsApp Business | `whatsappEnabled`, `whatsappPhoneNumberId`, `whatsappBusinessAccountId` | Populates the host CMS's existing `lib/whatsapp.ts` `metaCloud` provider — no plugin code needed for outbound sending. |
 | 🧵 Threads | `threadsEnabled`, **Connect Threads** button, `threadsUserId`/`threadsUsername` (read-only, set by Connect), `threadsAccessToken` (hidden, encrypted) | Independent OAuth flow — see [Connecting Facebook, Instagram, and Threads](#connecting-facebook-instagram-and-threads). |
 
-Credentials (`accessToken`, `oauthUserAccessToken`, `threadsAccessToken`) are AES-256-GCM encrypted at rest and masked in the admin UI (`••••1234`) for any authenticated non-internal request — the same pattern `ErpnextConfig` uses for `apiKey`/`apiSecret`. `META_APP_SECRET` never touches the database at all — it's read from the environment on each OAuth request.
+Credentials (`accessToken`, `oauthUserAccessToken`, `threadsAccessToken`) are AES-256-GCM encrypted at rest and masked in the admin UI (`••••1234`) for any authenticated non-internal request — the same pattern `ErpnextConfig` uses for `apiKey`/`apiSecret`. the app secret never touches the database at all — it's read from the environment on each OAuth request.
 
 ---
 
@@ -270,7 +270,7 @@ The one real gap: Meta's WhatsApp Cloud API webhook subscription requires a `GET
 
 ## Security
 
-- Credentials (`accessToken`) are AES-256-GCM encrypted at rest (`META_ENCRYPTION_KEY`), masked in the admin UI, and only decrypted server-side when actually needed (e.g. `getMetaCredentials()`, the connection-health check). `META_APP_SECRET` is never stored in the database at all — it's read from the environment only, on each OAuth request.
+- Credentials (`accessToken`) are AES-256-GCM encrypted at rest (`META_ENCRYPTION_KEY`), masked in the admin UI, and only decrypted server-side when actually needed (e.g. `getMetaCredentials()`, the connection-health check). the app secret is never stored in the database at all — it's read from the environment only, on each OAuth request.
 - `accessToken` is only writable by `admin`/`super-admin` roles (`adminOrAboveField` field-level access) — editors can see the masked config but can't rotate credentials or repoint a connection.
 - `getMetaCredentials()` never falls back across sites — a lookup for one site's slug will never return another tenant's credentials, even on a partial/missing config.
 - The Commerce Catalog feed is intentionally public (Meta's crawler needs unauthenticated access) but strictly site-scoped — it can never return another site's data, and only returns docs that already belong to the requested site.
