@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1
+
+### Fixed
+
+- **An organization admin (and an editor) could not create a Meta connection, so no site could be connected.** The create rule refused unless the request already named a
+  site, but the admin screen asks "may this person create one?" before there is a document, so the answer was always no and "Create New" never appeared (only a
+  super-admin saw it). An admin or editor may now start one. Nothing else is looser: the site is still a required field, an editor is still pinned to their own site,
+  and a site that is submitted is still checked against the admin's organization.
+
 ## 0.6.0
 
 ### Changed (breaking)

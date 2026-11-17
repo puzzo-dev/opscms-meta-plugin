@@ -86,10 +86,13 @@ describe('siteScopedCreate', () => {
         assert.equal(roles.siteScopedCreate()(reqWithData(editor, { site: 99 })), false)
     })
 
-    it('refuses a create with no site at all', () => {
-        assert.equal(roles.siteScopedCreate()(reqWithData(editor, {})), false)
-        assert.equal(roles.siteScopedCreate()(reqWithData(editor, { site: '' })), false)
-        assert.equal(roles.siteScopedCreate()(reqWithData(editor, { site: null })), false)
+    it('lets an admin or editor START a create before a site is named (the admin screen asks this way), but not an anonymous caller or another role', () => {
+        // The site is a required field and an editor is pinned to their own site by the field's hook, so nothing is created under a wrong site.
+        assert.equal(roles.siteScopedCreate()(reqWithData(editor, {})), true)
+        assert.equal(roles.siteScopedCreate()(reqWithData(editor, { site: '' })), true)
+        assert.equal(roles.siteScopedCreate()(reqWithData(editor, { site: null })), true)
+        assert.equal(roles.siteScopedCreate()(reqWithData(null, {})), false)
+        assert.equal(roles.siteScopedCreate()(reqWithData({ id: 5, role: 'viewer', site: 7 } as never, {})), false)
     })
 
     it('accepts a site supplied as a populated object rather than a bare id', () => {
@@ -156,6 +159,12 @@ describe('organization admin (site owner)', () => {
         assert.deepEqual(await roles.siteScopedRead()(ownerReq() as never), { site: { in: [11, 12] } })
         assert.deepEqual(await roles.siteScopedUpdate()(ownerReq() as never), { site: { in: [11, 12] } })
         assert.deepEqual(await roles.siteScopedDelete()(ownerReq() as never), { site: { in: [11, 12] } })
+    })
+
+    it('may start a create with no site named yet (the Create New button), and the site they then pick is still checked', async () => {
+        assert.equal(await roles.siteScopedCreate()(ownerReq() as never), true)
+        assert.equal(await roles.siteScopedCreate()(ownerReq({}) as never), true)
+        assert.equal(await roles.siteScopedCreate()(ownerReq({ site: 99 }) as never), false)
     })
 
     it('creates a config only for a site in that organization', async () => {

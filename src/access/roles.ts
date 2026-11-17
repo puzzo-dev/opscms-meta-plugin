@@ -126,7 +126,10 @@ export const siteScopedCreate = (siteField = 'site'): Access => {
         if (u.role === 'super-admin') return true
         if (!['admin', 'editor'].includes(u.role)) return false
         const rawDocSite = submittedSiteId(data as Record<string, unknown> | undefined, siteField)
-        if (rawDocSite === undefined || rawDocSite === null || rawDocSite === '') return false
+        // No site named yet. This is how the admin screen asks whether to offer "Create New" (it asks before there is a document), so refusing here
+        // meant an organization admin never saw the button and could not connect a site at all. An admin or editor may START one: the site is a
+        // required field, an editor is pinned to their own site by the field's hook, and as soon as a site IS submitted it is checked below.
+        if (rawDocSite === undefined || rawDocSite === null || rawDocSite === '') return true
         const siteId = getUserSiteId(u)
         if (siteId) return String(rawDocSite) === String(siteId)
         if (u.role !== 'admin') return false
