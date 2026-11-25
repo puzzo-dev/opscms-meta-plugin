@@ -30,13 +30,22 @@ export function explainGraphError(body: GraphErrorBody | null | undefined): stri
     return error.message ?? null
 }
 
-async function parseGraphError(res: Response): Promise<string> {
+/**
+ * Where a person accepts the Pixel terms for a business: the Pixels (data sources) page of its Events Manager, on Meta's own site (a Meta page cannot be shown inside another site's page, so
+ * the panel opens it in a popup). Meta decides what that page shows; it asks for the terms when the business has not accepted them.
+ */
+export const pixelTermsUrl = (businessId: string): string => `https://business.facebook.com/events_manager2/list/pixel/?business_id=${encodeURIComponent(businessId)}`
+
+/** Meta's `error_subcode` for "the business has not accepted the Pixel terms of service". */
+export const PIXEL_TERMS_SUBCODE = 1784018
+
+async function graphFailure(res: Response): Promise<{ error: string; subcode?: number }> {
     try {
         const body = await res.json() as GraphErrorBody
         const said = explainGraphError(body)
-        if (said) return said
+        if (said) return { error: said, ...(body.error?.error_subcode ? { subcode: body.error.error_subcode } : {}) }
     } catch { /* keep default */ }
-    return `Graph API error: ${res.status}`
+    return { error: `Graph API error: ${res.status}` }
 }
 
 async function callWithRetry(url: string, init: RequestInit): Promise<Response> {
@@ -68,6 +77,8 @@ export interface GraphResult<T> {
     status: number
     data?: T
     error?: string
+    /** Meta's `error_subcode`, when it gave one: lets a caller tell a known case from any other failure. */
+    subcode?: number
 }
 
 export async function graphGet<T = Record<string, unknown>>(
@@ -76,7 +87,7 @@ export async function graphGet<T = Record<string, unknown>>(
 ): Promise<GraphResult<T>> {
     const qs = new URLSearchParams(params).toString()
     const res = await callWithRetry(`${GRAPH_BASE}${path}?${qs}`, { method: 'GET' })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: (await res.json()) as T }
 }
 
@@ -89,7 +100,7 @@ export async function graphPost<T = Record<string, unknown>>(
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(params).toString(),
     })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: (await res.json()) as T }
 }
 
@@ -107,7 +118,7 @@ export async function graphPostJson<T = Record<string, unknown>>(
         },
         body: JSON.stringify(body),
     })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: await readGraphJson<T>(res) }
 }
 
@@ -125,7 +136,7 @@ export async function graphDelete<T = Record<string, unknown>>(
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: await readGraphJson<T>(res) }
 }
 
@@ -135,7 +146,7 @@ export async function threadsGet<T = Record<string, unknown>>(
 ): Promise<GraphResult<T>> {
     const qs = new URLSearchParams(params).toString()
     const res = await callWithRetry(`${THREADS_BASE}${path}?${qs}`, { method: 'GET' })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: (await res.json()) as T }
 }
 
@@ -148,6 +159,6 @@ export async function threadsPost<T = Record<string, unknown>>(
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(params).toString(),
     })
-    if (!res.ok) return { ok: false, status: res.status, error: await parseGraphError(res) }
+    if (!res.ok) return { ok: false, status: res.status, ...(await graphFailure(res)) }
     return { ok: true, status: res.status, data: (await res.json()) as T }
 }

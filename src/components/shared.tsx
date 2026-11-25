@@ -198,6 +198,24 @@ export function openMetaOAuthPopup(
     }, 400)
 }
 
+/**
+ * Opens a page of Meta's in a popup and says when the person closes it (a Meta page cannot be shown inside this one, so the work that is done there, such as accepting the Pixel
+ * terms, is done in the popup and this carries on from here). Calls `onClosed(false)` at once when the browser blocks the popup, so the caller can show a plain link instead.
+ */
+export function openMetaPagePopup(url: string, onClosed: (opened: boolean) => void): void {
+    const popup = window.open(url, 'payload-meta-page', 'popup=yes,width=980,height=760')
+    if (!popup) {
+        onClosed(false)
+        return
+    }
+    const timer = window.setInterval(() => {
+        if (popup.closed) {
+            window.clearInterval(timer)
+            onClosed(true)
+        }
+    }, 500)
+}
+
 /** Reads and clears a query param left by an OAuth redirect callback, without a full reload. */
 export function useOAuthRedirectMessage(successParam: string, errorParam: string): { success: boolean; error: string | null } {
     const [state, setState] = React.useState<{ success: boolean; error: string | null }>({ success: false, error: null })

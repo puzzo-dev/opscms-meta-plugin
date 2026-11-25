@@ -6,6 +6,7 @@ import {
     FieldWrapper, LoadingState, EmptyState, ErrorState, SuccessState,
     ConnectButton, StyledSelect, useOAuthRedirectMessage,
     useMetaAppInfo, MetaAppInfoBadge, DetailList, openMetaOAuthPopup,
+    openMetaPagePopup,
 } from '../shared'
 import { clearedMetaUserConnection } from '../../oauth/clearedConnection'
 
@@ -62,6 +63,8 @@ export const MetaConnectPanelField: React.FC = () => {
     const [pixels, setPixels] = useState<PixelOption[] | null>(null)
     const [numbers, setNumbers] = useState<NumberOption[] | null>(null)
     const [assetsError, setAssetsError] = useState<string | null>(null)
+    /** Set when creating a Pixel was refused because the business has not accepted Meta's Pixel terms: the page where a person accepts them. */
+    const [termsUrl, setTermsUrl] = useState<string | null>(null)
     const [selectedCatalogId, setSelectedCatalogId] = useState('')
     const [selectedPixelId, setSelectedPixelId] = useState('')
     const [selectedNumberId, setSelectedNumberId] = useState('')
@@ -285,7 +288,12 @@ export const MetaConnectPanelField: React.FC = () => {
             businessId: createBusinessId || businesses[0]?.id,
         })
             .then((data) => {
-                if (data.error) { setAssetsError(data.error); return }
+                if (data.error) {
+                    setAssetsError(data.error)
+                    setTermsUrl(data.termsRequired && typeof data.termsUrl === 'string' ? data.termsUrl : null)
+                    return
+                }
+                setTermsUrl(null)
                 rememberPixel(data.pixelId, data.businessId)
                 setNewPixelName('')
                 setStepMessage(`Created Pixel “${newPixelName.trim()}” and selected it for this site.`)
@@ -294,6 +302,19 @@ export const MetaConnectPanelField: React.FC = () => {
             })
             .catch(() => setAssetsError('Failed to create the Pixel'))
             .finally(() => setSaving(false))
+    }
+
+    /** Opens Meta's page for the Pixel terms; when the person closes it, the Pixel is created again (the name they typed is still there). */
+    const acceptPixelTerms = () => {
+        if (!termsUrl) return
+        openMetaPagePopup(termsUrl, (opened) => {
+            if (!opened) {
+                setAssetsError(`Your browser blocked the window. Open ${termsUrl} yourself, accept the terms, then press Create Pixel again.`)
+                return
+            }
+            setAssetsError(null)
+            createPixel()
+        })
     }
 
     const useNumber = (phoneNumberId?: string) => {
@@ -422,6 +443,12 @@ export const MetaConnectPanelField: React.FC = () => {
                     {hasPage && (
                         <>
                             {assetsError && <ErrorState message={assetsError} />}
+                            {termsUrl && (
+                                <div style={stepStyle}>
+                                    <p style={hintStyle}>Meta needs this business to accept its Pixel terms once. It opens in a window; accept the terms there and close it, and the Pixel is created here.</p>
+                                    <ConnectButton onClick={acceptPixelTerms} disabled={saving}>Accept Meta&apos;s Pixel terms</ConnectButton>
+                                </div>
+                            )}
                             {stepMessage && <SuccessState message={stepMessage} />}
                             {catalogs === null ? (
                                 <LoadingState message="Loading catalogs, Pixels, and WhatsApp numbers…" />

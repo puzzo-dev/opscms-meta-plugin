@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload'
 import { encryptCredential, decryptCredential, signOAuthState, verifyOAuthState, getMetaAppCredentials, getMaskedMetaAppId } from '../utils/metaCrypto'
-import { graphGet, graphPost, GRAPH_API_VERSION } from '../utils/metaGraphClient'
+import { graphGet, graphPost, GRAPH_API_VERSION, PIXEL_TERMS_SUBCODE, pixelTermsUrl } from '../utils/metaGraphClient'
 import { callerOwnsConfigSite, getUserWithRole, asCollectionSlug } from '../types'
 import { clearedMetaUserConnection } from '../oauth/clearedConnection'
 import { oauthPopupResponse } from '../oauth/popupResult'
@@ -447,7 +447,11 @@ export const metaOAuthCreatePixelEndpoint: Endpoint = {
             access_token: token,
         })
         if (!result.ok || !result.data?.id) {
-            req.payload.logger.warn(`[meta:pixel] creating a Pixel on business ${business.id} failed (${result.status}): ${result.error || 'no reason given'}`)
+            req.payload.logger.warn(`[meta:pixel] creating a Pixel on business ${business.id} failed (${result.status}${result.subcode ? `, ${result.subcode}` : ''}): ${result.error || 'no reason given'}`)
+            // The business has not accepted Meta's Pixel terms: only a person can, on a Meta page. The panel opens it in a popup and tries again when it is closed.
+            if (result.subcode === PIXEL_TERMS_SUBCODE) {
+                return Response.json({ error: result.error, termsRequired: true, termsUrl: pixelTermsUrl(business.id) }, { status: 502 })
+            }
             return Response.json({ error: result.error || 'Pixel creation failed' }, { status: 502 })
         }
 

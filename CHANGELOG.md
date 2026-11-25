@@ -12,6 +12,9 @@
 
 - **A failed call to Meta says what to do.** Meta's own message for a person is shown when it gives one, and a Pixel that cannot be created because the business has not accepted Meta's Pixel
   terms (error 10, subcode 1784018: "Application does not have permission for this action") says so and where to accept them. A failed Pixel creation is also written to the log.
+- **The Pixel terms are accepted from the panel.** When creating a Pixel is refused because the business has not accepted them, the panel shows an "Accept Meta's Pixel terms" button that opens the
+  business's Events Manager in a popup (a Meta page cannot be shown inside another site's page, and no call can accept the terms for a person), and creates the Pixel again when the popup is closed. If
+  the browser blocks the popup the panel gives the address. The create call answers `termsRequired` and `termsUrl` for this case.
 
 ## 0.6.1
 
