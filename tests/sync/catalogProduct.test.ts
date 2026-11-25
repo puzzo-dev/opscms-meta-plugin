@@ -5,6 +5,8 @@ import {
     catalogSourceSlug,
     COMMERCE_COLLECTION,
     deleteRequest,
+    hasUrlPlaceholder,
+    itemLink,
     toCatalogItem,
 } from '../../src/sync/catalogProduct.js'
 
@@ -72,5 +74,48 @@ describe('catalog source', () => {
 
     it('deletes by the same retailer id the update used', () => {
         assert.deepEqual(deleteRequest('12'), { method: 'DELETE', data: { id: '12' } })
+    })
+})
+
+describe('the page address of an item', () => {
+    const flavour = { id: 3, title: 'Berry Cherry 330ml', price: 2500, category: { id: 9, slug: 'berry-cherry' } }
+    const adun = 'https://avrilbeetails.com/adun/{category.slug}'
+
+    it('can be the slug of its category, for a shop with one page per category', () => {
+        assert.equal(itemLink(flavour, adun), 'https://avrilbeetails.com/adun/berry-cherry')
+        assert.equal(toCatalogItem(flavour, { urlTemplate: adun, serverUrl: '' })?.link, 'https://avrilbeetails.com/adun/berry-cherry')
+    })
+
+    it('leaves out an item whose category cannot be read or has no slug (a link that leads nowhere is worse than none)', () => {
+        assert.equal(itemLink({ id: 3, title: 'x', category: 9 }, adun), null, 'the category was not read as a document')
+        assert.equal(itemLink({ id: 3, title: 'x', category: { id: 9 } }, adun), null)
+        assert.equal(itemLink({ id: 3, title: 'x' }, adun), null)
+        assert.equal(toCatalogItem({ id: 3, title: 'x', price: 1 }, { urlTemplate: adun, serverUrl: '' }), null)
+    })
+
+    it('still takes {slug}, and both together', () => {
+        assert.equal(itemLink({ id: 7, slug: 'jollof' }, 'https://s.example/m/{slug}'), 'https://s.example/m/jollof')
+        assert.equal(itemLink({ id: 7 }, 'https://s.example/m/{slug}'), 'https://s.example/m/7', 'the number when there is no slug, as before')
+        assert.equal(itemLink({ id: 7, slug: 'a', category: { slug: 'b c' } }, 'https://s.example/{category.slug}/{slug}'), 'https://s.example/b%20c/a')
+    })
+
+    it('needs something to substitute, so every item does not get the same link', () => {
+        assert.equal(hasUrlPlaceholder('https://s.example/menu'), false)
+        assert.equal(itemLink({ id: 1, slug: 'a' }, 'https://s.example/menu'), null)
+    })
+})
+
+describe('an item as a save hands it over', () => {
+    it('has its category read when the template needs the category\'s slug, and not otherwise', async () => {
+        const { withCategoryRead } = await import('../../src/sync/catalogSync.js')
+        const reads: Array<unknown> = []
+        const payload = { findByID: async ({ id }: { id: unknown }) => { reads.push(id); return { id, slug: 'berry-cherry' } } } as never
+        const read = await withCategoryRead(payload, { id: 3, category: 9 }, 'https://avrilbeetails.com/adun/{category.slug}')
+        assert.deepEqual((read as { category: unknown }).category, { id: 9, slug: 'berry-cherry' })
+        assert.deepEqual(reads, [9])
+        assert.deepEqual(await withCategoryRead(payload, { id: 3, category: 9 }, 'https://s.example/{slug}'), { id: 3, category: 9 })
+        assert.deepEqual(reads, [9], 'no read for a template that does not need it')
+        const failing = { findByID: async () => { throw new Error('gone') } } as never
+        assert.deepEqual(await withCategoryRead(failing, { id: 3, category: 9 }, 'https://s.example/{category.slug}'), { id: 3, category: 9 })
     })
 })

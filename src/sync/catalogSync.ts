@@ -96,6 +96,22 @@ async function pushBatch(
     return messages.length ? messages.join('; ') : null
 }
 
+/**
+ * A save hands the sync the item as it was saved, where its category is only an id. A template with `{category.slug}` needs the category as a document, so it is read here
+ * (the full sync reads items one level deep and has it already).
+ */
+export async function withCategoryRead(payload: Payload, doc: Record<string, unknown>, template: string): Promise<Record<string, unknown>> {
+    if (!template.includes('{category.slug}')) return doc
+    const category = doc.category
+    if (category == null || typeof category === 'object') return doc
+    try {
+        const read = await payload.findByID({ collection: asCollectionSlug('catalogue-categories'), id: category as string | number, depth: 0, overrideAccess: true })
+        return { ...doc, category: read }
+    } catch {
+        return doc
+    }
+}
+
 export async function syncCatalogDoc(
     payload: Payload,
     doc: Record<string, unknown>,
@@ -108,10 +124,11 @@ export async function syncCatalogDoc(
     if (!config || config.sourceCollection !== collectionSlug) return
 
     const serverUrl = (process.env.PAYLOAD_PUBLIC_SERVER_URL || '').replace(/\/+$/, '')
+    const readDoc = method === 'DELETE' ? doc : await withCategoryRead(payload, doc, config.urlTemplate)
     const request = method === 'DELETE'
         ? deleteRequest(String(doc.id))
         : (() => {
-            const item = toCatalogItem(doc, {
+            const item = toCatalogItem(readDoc, {
                 urlTemplate: config.urlTemplate,
                 serverUrl,
                 brand: config.brand,

@@ -482,7 +482,7 @@ export const MetaConfig: CollectionConfig = {
                             name: 'catalogItemUrlTemplate',
                             type: 'text',
                             admin: {
-                                description: 'Item page URL template on the live site — "{slug}" is replaced per item, e.g. https://thatofadagirl.com/menu/{slug}. Required before products can sync (Meta rejects an item with no link).',
+                                description: 'Item page URL template on the live site. "{slug}" is replaced per item, e.g. https://thatofadagirl.com/menu/{slug}; "{category.slug}" by the slug of the item\'s category, for a shop with one page per category whose items are sizes of it, e.g. https://avrilbeetails.com/adun/{category.slug}. Required before products can sync (Meta rejects an item with no link).',
                                 condition: (_data, siblingData) => Boolean(siblingData?.catalogEnabled),
                             },
                         },

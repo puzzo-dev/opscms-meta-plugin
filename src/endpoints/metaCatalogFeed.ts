@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload'
+import { itemLink } from '../sync/catalogProduct'
 import { asCollectionSlug } from '../types'
 
 /**
@@ -118,12 +119,11 @@ export const metaCatalogFeedEndpoint: Endpoint = {
             const description = rawDescription ? stripHtml(String(rawDescription)).slice(0, 5000) : ''
             const price = firstDefined(item.price, item.price_from, item.priceFrom)
             const available = item.available === undefined ? true : Boolean(item.available)
-            const slug = String(firstDefined(item.slug, item.id))
-            const link = urlTemplate.replace('{slug}', encodeURIComponent(slug))
+            const link = itemLink(item, urlTemplate)
             const image = firstDefined(item.image, item.featuredImage, item.photo)
             const imageLink = resolveImageUrl(image, serverUrl)
 
-            if (!title || price === undefined) continue // Meta requires both — skip incomplete items rather than emit an invalid row.
+            if (!title || price === undefined || !link) continue // Meta requires all three — skip incomplete items rather than emit an invalid row.
 
             rows.push([
                 csvEscape(id),

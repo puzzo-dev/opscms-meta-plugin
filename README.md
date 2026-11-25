@@ -233,7 +233,7 @@ Generic by design: reads whichever collection `catalogSourceCollection` designat
 | `description` | `description`, `excerpt`, `body` (HTML stripped) |
 | `price` | `price`, `price_from`, `priceFrom` |
 | `image_link` | `image`, `featuredImage`, `photo` (resolved to an absolute URL) |
-| `link` | `catalogItemUrlTemplate` with `{slug}` substituted |
+| `link` | `catalogItemUrlTemplate` with `{slug}` (the item's slug, else its number) and/or `{category.slug}` (the slug of the item's category) substituted; an item whose `{category.slug}` cannot be filled is left out |
 
 Items missing a `title` or `price` are skipped rather than emitted as invalid rows — Meta rejects the whole feed on malformed entries, so a few incomplete source documents shouldn't take down catalog sync for everything else.
 

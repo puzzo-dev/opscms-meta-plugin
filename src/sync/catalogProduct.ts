@@ -81,6 +81,31 @@ export function catalogSourceSlug(configured: unknown): string {
     return slug || COMMERCE_COLLECTION
 }
 
+/** What an item page address template may contain: `{slug}` (the item's own slug, else its number) and `{category.slug}` (the slug of the item's category: a shop whose pages are one per category, and whose items are sizes of it). */
+export const URL_TEMPLATE_PLACEHOLDERS = ['{slug}', '{category.slug}'] as const
+
+/** Whether a template has something to substitute (an address with neither would give every item the same link). */
+export function hasUrlPlaceholder(template: string): boolean {
+    return URL_TEMPLATE_PLACEHOLDERS.some((placeholder) => template.includes(placeholder))
+}
+
+/**
+ * The page address of one item, from the site's template. `{category.slug}` needs the item's category read as a document (depth 1) with a slug; an item whose category
+ * has none (or has no category) has no address and is left out, rather than being given one that leads nowhere.
+ */
+export function itemLink(doc: Record<string, unknown>, template: string): string | null {
+    let link = template.trim()
+    if (!hasUrlPlaceholder(link)) return null
+    if (link.includes('{category.slug}')) {
+        const category = doc.category
+        const categorySlug = category && typeof category === 'object' ? plainText((category as Record<string, unknown>).slug).trim() : ''
+        if (!categorySlug) return null
+        link = link.split('{category.slug}').join(encodeURIComponent(categorySlug))
+    }
+    if (link.includes('{slug}')) link = link.split('{slug}').join(encodeURIComponent(plainText(firstDefined(doc.slug, doc.id))))
+    return link
+}
+
 export function toCatalogItem(
     doc: Record<string, unknown>,
     options: { urlTemplate: string; serverUrl: string; currency?: string; brand?: string },
@@ -91,9 +116,8 @@ export function toCatalogItem(
     const amount = Number(price)
     if (!Number.isFinite(amount)) return null
 
-    const slug = plainText(firstDefined(doc.slug, doc.id))
-    const template = options.urlTemplate.trim()
-    if (!template.includes('{slug}')) return null
+    const link = itemLink(doc, options.urlTemplate)
+    if (!link) return null
 
     const rawDescription = firstDefined(doc.description, doc.excerpt, doc.body)
     const description = rawDescription ? stripHtml(plainText(rawDescription)).slice(0, 5000) : title
@@ -108,7 +132,7 @@ export function toCatalogItem(
         availability: available ? 'in stock' : 'out of stock',
         condition: 'new',
         price: `${amount.toFixed(2)} ${currency}`,
-        link: template.replace('{slug}', encodeURIComponent(slug)),
+        link,
     }
     if (image) item.image_link = image
     if (options.brand) item.brand = options.brand

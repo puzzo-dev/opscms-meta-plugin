@@ -176,7 +176,7 @@ export const metaCatalogSyncEndpoint: Endpoint = {
             return Response.json({ error: 'Turn on Commerce Catalog and choose a catalog first.' }, { status: 400 })
         }
         if (!config.catalogItemUrlTemplate) {
-            return Response.json({ error: 'Set the item page URL template (it must contain {slug}) before syncing.' }, { status: 400 })
+            return Response.json({ error: 'Set the item page URL template (it must contain {slug} or {category.slug}) before syncing.' }, { status: 400 })
         }
         const siteId = relationId(config.site)
         if (siteId == null) return Response.json({ error: 'This Meta connection has no site.' }, { status: 400 })

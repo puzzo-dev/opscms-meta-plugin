@@ -13,13 +13,28 @@ function sleep(ms: number): Promise<void> {
 }
 
 interface GraphErrorBody {
-    error?: { message?: string; type?: string; code?: number }
+    error?: { message?: string; type?: string; code?: number; error_subcode?: number; error_user_title?: string; error_user_msg?: string }
+}
+
+/** Errors Meta answers with a code and nothing a person can act on, said in words they can: keyed by `error_subcode`. */
+const KNOWN_SUBCODES: Record<number, string> = {
+    1784018: 'This business has not accepted Meta\'s Pixel terms. Open Events Manager for the business, start connecting a Web data source, accept the terms, then try again (or create the Pixel there and choose it here).',
+}
+
+/** The words for an error body: ours for a known subcode, else Meta's own message for a person (`error_user_msg`), else its technical one. */
+export function explainGraphError(body: GraphErrorBody | null | undefined): string | null {
+    const error = body?.error
+    if (!error) return null
+    if (error.error_subcode && KNOWN_SUBCODES[error.error_subcode]) return KNOWN_SUBCODES[error.error_subcode]
+    if (error.error_user_msg) return error.error_user_title ? `${error.error_user_title}: ${error.error_user_msg}` : error.error_user_msg
+    return error.message ?? null
 }
 
 async function parseGraphError(res: Response): Promise<string> {
     try {
         const body = await res.json() as GraphErrorBody
-        if (body?.error?.message) return body.error.message
+        const said = explainGraphError(body)
+        if (said) return said
     } catch { /* keep default */ }
     return `Graph API error: ${res.status}`
 }

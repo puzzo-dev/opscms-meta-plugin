@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.0
+
+### Added
+
+- **A catalogue item's page address can use the slug of its category: `{category.slug}`.** A shop whose pages are one per category, with the items sizes of it (AvrilBeetails: `/adun/<flavour>`), has no
+  slug on its items, so `{slug}` gave every link the item's number and a page that does not exist. The template may now be `https://avrilbeetails.com/adun/{category.slug}`. Both `{slug}` and
+  `{category.slug}` may be used together. An item whose category has no slug is left out of the sync and the feed (with a link that leads nowhere Meta would only warn).
+
+### Changed
+
+- **A failed call to Meta says what to do.** Meta's own message for a person is shown when it gives one, and a Pixel that cannot be created because the business has not accepted Meta's Pixel
+  terms (error 10, subcode 1784018: "Application does not have permission for this action") says so and where to accept them. A failed Pixel creation is also written to the log.
+
 ## 0.6.1
 
 ### Fixed

@@ -447,6 +447,7 @@ export const metaOAuthCreatePixelEndpoint: Endpoint = {
             access_token: token,
         })
         if (!result.ok || !result.data?.id) {
+            req.payload.logger.warn(`[meta:pixel] creating a Pixel on business ${business.id} failed (${result.status}): ${result.error || 'no reason given'}`)
             return Response.json({ error: result.error || 'Pixel creation failed' }, { status: 502 })
         }
 
