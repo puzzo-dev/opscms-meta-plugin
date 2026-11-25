@@ -6,8 +6,7 @@ import {
     FieldWrapper, LoadingState, EmptyState, ErrorState, SuccessState,
     ConnectButton, StyledSelect, useOAuthRedirectMessage,
     useMetaAppInfo, MetaAppInfoBadge, DetailList, openMetaOAuthPopup,
-    openMetaPagePopup,
-} from '../shared'
+    openMetaPagePopup, readJson } from '../shared'
 import { clearedMetaUserConnection } from '../../oauth/clearedConnection'
 
 export { MetaTenantDefaults } from './TenantDefaults'
@@ -79,7 +78,7 @@ export const MetaConnectPanelField: React.FC = () => {
         if (!id) return
         setLoadingDoc(true)
         fetch(`/api/meta-config/${id}?depth=0`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => setDoc(data))
             .catch(() => { /* ignore */ })
             .finally(() => setLoadingDoc(false))
@@ -93,7 +92,7 @@ export const MetaConnectPanelField: React.FC = () => {
     useEffect(() => {
         if (!id || !isConnected) return
         fetch(`/api/meta-oauth/me?configId=${id}`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => { if (data.name) setFacebookName(data.name) })
             .catch(() => { /* the page list still works without the display name */ })
     }, [id, isConnected])
@@ -103,7 +102,7 @@ export const MetaConnectPanelField: React.FC = () => {
         setLoadingPages(true)
         setActionError(null)
         fetch(`/api/meta-oauth/pages?configId=${id}`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setActionError(data.error); return }
                 setPages(data.pages ?? [])
@@ -121,9 +120,9 @@ export const MetaConnectPanelField: React.FC = () => {
         if (!id) return
         setAssetsError(null)
         Promise.all([
-            fetch(`/api/meta-catalog/catalogs?configId=${id}`).then((res) => res.json()),
-            fetch(`/api/meta-oauth/pixels?configId=${id}`).then((res) => res.json()),
-            fetch(`/api/meta-whatsapp/numbers?configId=${id}`).then((res) => res.json()),
+            fetch(`/api/meta-catalog/catalogs?configId=${id}`).then(readJson),
+            fetch(`/api/meta-oauth/pixels?configId=${id}`).then(readJson),
+            fetch(`/api/meta-whatsapp/numbers?configId=${id}`).then(readJson),
         ]).then(([catalogData, pixelData, numberData]) => {
             if (catalogData.error) setAssetsError(catalogData.error)
             setCatalogs(catalogData.catalogs ?? [])
@@ -183,7 +182,7 @@ export const MetaConnectPanelField: React.FC = () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
-        }).then((res) => res.json())
+        }).then(readJson)
 
     const selectPage = (pageId?: string) => {
         const chosen = pageId || selectedPageId

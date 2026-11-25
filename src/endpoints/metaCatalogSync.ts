@@ -48,7 +48,7 @@ export const metaOAuthMeEndpoint: Endpoint = {
             fields: 'id,name',
             access_token: token,
         })
-        if (!me.ok) return Response.json({ connected: true, error: me.error }, { status: 502 })
+        if (!me.ok) return Response.json({ connected: true, error: me.error }, { status: 424 })
         return Response.json({ connected: true, id: me.data?.id, name: me.data?.name })
     },
 }
@@ -67,7 +67,7 @@ export const metaCatalogListEndpoint: Endpoint = {
         if (!token) return Response.json({ error: 'Connect this site with Facebook before choosing a catalog.' }, { status: 400 })
 
         const businesses = await listBusinesses(token, config.businessManagerId)
-        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 502 })
+        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 424 })
 
         const catalogs: Array<{ id: string; name: string; businessId: string; businessName: string }> = []
         for (const business of businesses.businesses) {
@@ -104,7 +104,7 @@ export const metaCatalogCreateEndpoint: Endpoint = {
         if (!token) return Response.json({ error: 'Connect this site with Facebook before creating a catalog.' }, { status: 400 })
 
         const businesses = await listBusinesses(token, body.businessId || config.businessManagerId)
-        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 502 })
+        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 424 })
         const business = businesses.businesses.find((item) => item.id === body.businessId) || businesses.businesses[0]
         if (!business) return Response.json({ error: 'This Facebook login has no Business Manager to own a catalog.' }, { status: 400 })
 
@@ -113,7 +113,7 @@ export const metaCatalogCreateEndpoint: Endpoint = {
             access_token: token,
         })
         if (!created.ok || !created.data?.id) {
-            return Response.json({ error: created.error || 'Catalog creation failed' }, { status: 502 })
+            return Response.json({ error: created.error || 'Catalog creation failed' }, { status: 424 })
         }
 
         await req.payload.update({

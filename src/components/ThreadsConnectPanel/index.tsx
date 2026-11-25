@@ -4,8 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useDocumentInfo } from '@payloadcms/ui'
 import {
     FieldWrapper, LoadingState, ErrorState, SuccessState, ConnectButton, useOAuthRedirectMessage,
-    useMetaAppInfo, MetaAppInfoBadge, DetailList,
-} from '../shared'
+    useMetaAppInfo, MetaAppInfoBadge, DetailList, readJson } from '../shared'
 
 interface DocSnapshot {
     threadsEnabled?: boolean
@@ -30,7 +29,7 @@ export const ThreadsConnectPanelField: React.FC = () => {
         if (!id) return
         setLoadingDoc(true)
         fetch(`/api/meta-config/${id}?depth=0`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => setDoc(data))
             .catch(() => { /* ignore */ })
             .finally(() => setLoadingDoc(false))

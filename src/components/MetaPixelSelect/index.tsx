@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { useDocumentInfo, useForm, TextInput } from '@payloadcms/ui'
-import { FieldWrapper, LoadingState, EmptyState, ErrorState, ConnectButton, StyledSelect } from '../shared'
+import { FieldWrapper, LoadingState, EmptyState, ErrorState, ConnectButton, StyledSelect, readJson } from '../shared'
 
 interface PixelOption {
     id: string
@@ -40,7 +40,7 @@ export const MetaPixelSelectField: React.FC = () => {
         setError(null)
         setSavedMessage(null)
         fetch(`/api/meta-oauth/pixels?configId=${id}`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 setPixels(data.pixels ?? [])
@@ -59,7 +59,7 @@ export const MetaPixelSelectField: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ configId: id, pixelId: selectedPixelId }),
         })
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 dispatchFields({ type: 'UPDATE', path: 'pixelEnabled', value: true })
@@ -80,7 +80,7 @@ export const MetaPixelSelectField: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ configId: id, name: newPixelName.trim() }),
         })
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 dispatchFields({ type: 'UPDATE', path: 'pixelEnabled', value: true })

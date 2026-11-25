@@ -36,3 +36,14 @@ describe('the Pixel terms', () => {
         assert.equal(pixelTermsUrl('984906337826445'), 'https://business.facebook.com/events_manager2/list/pixel/?business_id=984906337826445')
     })
 })
+
+describe('how a refused call to Meta is answered to the panel', () => {
+    it('is never a 502 (the proxy in front of the CMS replaces the body of a 5xx, so the reason is lost): 424 says the same and gets through', async () => {
+        const { readFileSync, readdirSync } = await import('node:fs')
+        const { join } = await import('node:path')
+        const dir = join(process.cwd(), 'src', 'endpoints')
+        for (const file of readdirSync(dir)) {
+            assert.ok(!/status: 502/.test(readFileSync(join(dir, file), 'utf8')), `${file} answers a failure of Meta with 502`)
+        }
+    })
+})

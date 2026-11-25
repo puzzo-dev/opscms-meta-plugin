@@ -128,7 +128,7 @@ export function useMetaAppInfo(): MetaAppInfo {
 
     React.useEffect(() => {
         fetch('/api/meta-oauth/app-info')
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => setState({ configured: Boolean(data.configured), maskedAppId: data.maskedAppId ?? null, loading: false }))
             .catch(() => setState({ configured: false, maskedAppId: null, loading: false }))
     }, [])
@@ -161,6 +161,19 @@ export const DetailList: React.FC<{ items: Array<{ label: string; value: React.R
         ))}
     </div>
 )
+
+/**
+ * Reads the answer of one of this plugin's endpoints as JSON. A body that is not JSON (a proxy's own error page, an empty answer) becomes an `error` a person can read, instead of a thrown
+ * parse error that the caller can only report as "Failed to ..." with no reason.
+ */
+export async function readJson(res: Response): Promise<any> {
+    const text = await res.text()
+    try {
+        return JSON.parse(text)
+    } catch {
+        return { error: `The server answered ${res.status} without a message${res.ok ? '' : '; try again, and if it keeps happening, check the CMS log'}.` }
+    }
+}
 
 export const META_OAUTH_MESSAGE_SOURCE = 'payload-meta-oauth'
 

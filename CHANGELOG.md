@@ -4,6 +4,9 @@
 
 ### Fixed
 
+- **The panel said "Failed to create the Pixel" and nothing else.** When Meta refused a call, the plugin answered with status 502, and the proxy in front of the CMS (Cloudflare) replaces the body of
+  a 5xx answer with its own error page, so the panel could not read the reason and could only say "Failed to ...". Those answers (a Pixel, a catalogue, a WhatsApp call that Meta refused) are now
+  status 424, which is passed through with its message, and the panel reads an answer that is not JSON as an error with the status in it instead of throwing.
 - **No product was ever sent to a Meta catalogue.** The batch call named its items `item_type: PRODUCT`, which Meta no longer accepts ("This value of item_type is not currently supported"), so every sync
   reported "Sent 0 products" with that message and nothing reached the catalogue. It names them `PRODUCT_ITEM` (checked against Meta: that value is accepted).
 

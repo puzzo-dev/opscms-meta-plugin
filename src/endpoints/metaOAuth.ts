@@ -266,7 +266,7 @@ export const metaOAuthPagesEndpoint: Endpoint = {
             access_token: userToken,
             limit: '100',
         })
-        if (!result.ok) return Response.json({ error: result.error }, { status: 502 })
+        if (!result.ok) return Response.json({ error: result.error }, { status: 424 })
 
         return Response.json({ pages: result.data?.data ?? [] })
     },
@@ -299,7 +299,7 @@ export const metaOAuthSelectPageEndpoint: Endpoint = {
             access_token: userToken,
             limit: '100',
         })
-        if (!pagesResult.ok) return Response.json({ error: pagesResult.error }, { status: 502 })
+        if (!pagesResult.ok) return Response.json({ error: pagesResult.error }, { status: 424 })
 
         const page = (pagesResult.data?.data ?? []).find((p) => p.id === pageId)
         if (!page || !page.access_token) {
@@ -367,7 +367,7 @@ export const metaOAuthListPixelsEndpoint: Endpoint = {
         const token = tokenForCatalog(config)
         if (!token) return Response.json({ error: 'Not connected' }, { status: 400 })
         const businesses = await listBusinesses(token, config.businessManagerId)
-        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 502 })
+        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 424 })
 
         const pixels: Array<{ id: string; name: string; businessId: string }> = []
         for (const business of businesses.businesses) {
@@ -438,7 +438,7 @@ export const metaOAuthCreatePixelEndpoint: Endpoint = {
         const token = tokenForCatalog(config)
         if (!token) return Response.json({ error: 'Not connected' }, { status: 400 })
         const businesses = await listBusinesses(token, body.businessId || config.businessManagerId)
-        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 502 })
+        if (!businesses.ok) return Response.json({ error: businesses.error }, { status: 424 })
         const business = businesses.businesses.find((item) => item.id === body.businessId) || businesses.businesses[0]
         if (!business) return Response.json({ error: 'This Facebook login has no Business Manager to own a Pixel.' }, { status: 400 })
 
@@ -450,9 +450,9 @@ export const metaOAuthCreatePixelEndpoint: Endpoint = {
             req.payload.logger.warn(`[meta:pixel] creating a Pixel on business ${business.id} failed (${result.status}${result.subcode ? `, ${result.subcode}` : ''}): ${result.error || 'no reason given'}`)
             // The business has not accepted Meta's Pixel terms: only a person can, on a Meta page. The panel opens it in a popup and tries again when it is closed.
             if (result.subcode === PIXEL_TERMS_SUBCODE) {
-                return Response.json({ error: result.error, termsRequired: true, termsUrl: pixelTermsUrl(business.id) }, { status: 502 })
+                return Response.json({ error: result.error, termsRequired: true, termsUrl: pixelTermsUrl(business.id) }, { status: 424 })
             }
-            return Response.json({ error: result.error || 'Pixel creation failed' }, { status: 502 })
+            return Response.json({ error: result.error || 'Pixel creation failed' }, { status: 424 })
         }
 
         await req.payload.update({

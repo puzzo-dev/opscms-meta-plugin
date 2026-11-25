@@ -101,7 +101,7 @@ export const metaWhatsAppNumbersEndpoint: Endpoint = {
         const token = tokenForCatalog(config)
         if (!token) return Response.json({ error: 'Connect this site with Facebook before choosing a WhatsApp number.' }, { status: 400 })
         const listed = await numbersForToken(token, config.businessManagerId)
-        if (!listed.ok) return Response.json({ error: listed.error }, { status: 502 })
+        if (!listed.ok) return Response.json({ error: listed.error }, { status: 424 })
         return Response.json({ numbers: listed.numbers })
     },
 }
@@ -122,7 +122,7 @@ export const createMetaWhatsAppSelectEndpoint = (host?: MetaHost): Endpoint => (
         if (!token) return Response.json({ error: 'Connect this site with Facebook first.' }, { status: 400 })
 
         const listed = await numbersForToken(token, config.businessManagerId)
-        if (!listed.ok) return Response.json({ error: listed.error }, { status: 502 })
+        if (!listed.ok) return Response.json({ error: listed.error }, { status: 424 })
         const chosen = listed.numbers.find((number) => number.id === body.phoneNumberId)
         if (!chosen) {
             return Response.json({ error: 'That WhatsApp number is not on this Facebook login.' }, { status: 404 })

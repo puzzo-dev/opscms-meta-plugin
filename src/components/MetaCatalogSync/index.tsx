@@ -3,8 +3,7 @@
 import React, { useCallback, useState } from 'react'
 import { useDocumentInfo, useForm, useFormFields } from '@payloadcms/ui'
 import {
-    FieldWrapper, LoadingState, EmptyState, ErrorState, SuccessState, ConnectButton, StyledSelect,
-} from '../shared'
+    FieldWrapper, LoadingState, EmptyState, ErrorState, SuccessState, ConnectButton, StyledSelect, readJson } from '../shared'
 
 interface CatalogOption {
     id: string
@@ -35,7 +34,7 @@ export const MetaCatalogSyncField: React.FC = () => {
         setLoading(true)
         setError(null)
         fetch(`/api/meta-catalog/catalogs?configId=${id}`)
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 setCatalogs(data.catalogs ?? [])
@@ -55,7 +54,7 @@ export const MetaCatalogSyncField: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ configId: id, catalogId: catalog.id, businessId: catalog.businessId }),
         })
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 dispatchFields({ type: 'UPDATE', path: 'catalogEnabled', value: true })
@@ -80,7 +79,7 @@ export const MetaCatalogSyncField: React.FC = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ configId: id }),
         })
-            .then((res) => res.json())
+            .then(readJson)
             .then((data) => {
                 if (data.error) { setError(data.error); return }
                 const problems = Array.isArray(data.errors) && data.errors.length ? ` ${data.errors[0]}` : ''
