@@ -119,3 +119,19 @@ describe('an item as a save hands it over', () => {
         assert.deepEqual(await withCategoryRead(failing, { id: 3, category: 9 }, 'https://s.example/{category.slug}'), { id: 3, category: 9 })
     })
 })
+
+describe('what the batch call names its items', () => {
+    it('asks Meta for PRODUCT_ITEM (PRODUCT is refused: "This value of item_type is not currently supported")', async () => {
+        const { pushBatch, CATALOG_ITEM_TYPE } = await import('../../src/sync/catalogSync.js')
+        const real = globalThis.fetch
+        let sent = ''
+        globalThis.fetch = (async (_url: unknown, init?: RequestInit) => { sent = String(init?.body ?? ''); return new Response(JSON.stringify({ handles: ['h'] }), { status: 200 }) }) as typeof fetch
+        try {
+            assert.equal(await pushBatch('123', 'tok', [deleteRequest('1')]), null)
+            assert.equal(new URLSearchParams(sent).get('item_type'), 'PRODUCT_ITEM')
+            assert.equal(CATALOG_ITEM_TYPE, 'PRODUCT_ITEM')
+        } finally {
+            globalThis.fetch = real
+        }
+    })
+})

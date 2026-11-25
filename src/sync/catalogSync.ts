@@ -11,6 +11,9 @@ import {
     type CatalogBatchRequest,
 } from './catalogProduct'
 
+/** The `item_type` Meta's items_batch takes for a product of a catalogue. */
+export const CATALOG_ITEM_TYPE = 'PRODUCT_ITEM'
+
 export interface CatalogSyncResult {
     synced: number
     skipped: number
@@ -74,7 +77,7 @@ export async function findCatalogConfig(
     }
 }
 
-async function pushBatch(
+export async function pushBatch(
     catalogId: string,
     token: string,
     requests: CatalogBatchRequest[],
@@ -83,7 +86,8 @@ async function pushBatch(
         `/${catalogId}/items_batch`,
         {
             access_token: token,
-            item_type: 'PRODUCT',
+            // `PRODUCT_ITEM`: Meta no longer accepts `PRODUCT` ("This value of item_type is not currently supported"), so no product was ever sent.
+            item_type: CATALOG_ITEM_TYPE,
             allow_upsert: 'true',
             requests: JSON.stringify(requests),
         },

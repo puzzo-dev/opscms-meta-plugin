@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.1
+
+### Fixed
+
+- **No product was ever sent to a Meta catalogue.** The batch call named its items `item_type: PRODUCT`, which Meta no longer accepts ("This value of item_type is not currently supported"), so every sync
+  reported "Sent 0 products" with that message and nothing reached the catalogue. It names them `PRODUCT_ITEM` (checked against Meta: that value is accepted).
+
 ## 0.7.0
 
 ### Added
